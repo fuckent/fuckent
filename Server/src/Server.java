@@ -3,7 +3,6 @@ import java.net.*;
 
 public class Server implements Runnable {
 
-	private ServerPI serverPI;
 	private ClientManager clientManager;
 	private ServerDataManager serverDataManager;
 	private ServerSocket listener;
@@ -49,7 +48,7 @@ public class Server implements Runnable {
 				Socket conn = listener.accept();
 
 				/* create a new thread ServerPI to deal with this connection */
-				Thread t = new Thread(new ServerPI(conn));
+				Thread t = new Thread(new ServerPI(conn, clientManager, serverDataManager));
 				t.start();
 
 				// TODO Print LOG message HERE!

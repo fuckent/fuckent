@@ -1,12 +1,17 @@
 import java.net.*;
-import java.util.regex.Pattern;
 import java.io.*;
 
 public class ServerPI implements Runnable {
 
 	private Socket con;
+	
+	/* Use  variables below to interactive with the Database */
+	private ClientManager cm;
+	private ServerDataManager sdm;
 
-	public ServerPI(Socket con) {
+	public ServerPI(Socket con, ClientManager cm, ServerDataManager sdm) {
+		this.cm = cm;
+		this.sdm = sdm;
 		this.con = con;
 	}
 
