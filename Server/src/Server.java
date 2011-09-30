@@ -11,7 +11,7 @@ public class Server implements Runnable {
 	 * Init Client Manager, ServerDataManager
 	 * 
 	 * @param port
-	 *            Listen Port
+	 *            Listen Port hom qiua em toi
 	 */
 	Server(int port) {
 		try {
