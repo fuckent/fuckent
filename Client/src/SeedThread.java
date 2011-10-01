@@ -7,10 +7,9 @@
  *
  * @author thong
  */
-class SeedThread extends ClientThread{
-    
+class SeedThread extends ClientThread {
+
     public void Run() {
-        
     }
 
     public SeedThread() {
@@ -30,5 +29,9 @@ class SeedThread extends ClientThread{
     public int getRate() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
-    
+
+    @Override
+    public String getClientAddr() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 }

@@ -46,18 +46,9 @@ public class ServerPI {
         return 0;
     }
 
-    public ServerPI(String serverAddr, int port) {
-        try {
+    public ServerPI(String serverAddr, int port) throws IOException {
+
             con = new Socket(serverAddr, port);
-
-
-        } catch (UnknownHostException ex) {
-            // TODO: CODE HERE!!
-            Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            // TODO: CODE HERE!!!
-            Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
-        }
 
 
     }

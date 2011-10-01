@@ -20,7 +20,7 @@ public class ThreadManager {
         dic.put(new Integer(FileID), t);
     }
     
-    public Thread getThread(int FileID) {
+    public ClientThread getThread(int FileID) {
         return dic.get(new Integer(FileID));
     }
     

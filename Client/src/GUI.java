@@ -13,12 +13,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
@@ -27,115 +30,139 @@ import javax.swing.SwingUtilities;
 public class GUI extends javax.swing.JFrame {
 
     Client client;
-    
+
     // TODO: CODE FROM HERE!!!
     private void downloadFile(int fileID) {
         System.out.println("User wants to download file: " + fileID);
     }
-    
+
     private int seedFile(String path) {
         System.out.println("User wants to seed file: " + path);
-        
+
         return 0;
     }
-    
+
     private void shareFile(int fileID) {
         System.out.println("User wants to share file: " + fileID);
     }
-    
+
     private void unShareFile(int fileID) {
         System.out.print("User wants to unshare file: " + fileID);
     }
-    
+
     private void closeThread(int fileID) {
         System.out.print("User wants to close thread processing file: " + fileID);
     }
-    
+
     private void limitRate(int fileID, int rate) {
         System.out.print("User wants to limit file: " + fileID + " rate to " + rate + "kB");
     }
-    
+
     private int getRate(int fileID) {
         System.out.print("User wants to get limit rate of file: " + fileID);
         return 0;
     }
 
+    public void drawTable() {
+        int fileID;
+        String fileName;
+        int fileSize;
+        int curSize;
+        String fileStatus;
+        String clientAddr;
+        String hash;
+        int rate;
+        ClientThread a;
+        int slr = fileTable.getSelectedRow();
+        try {
+            DefaultTableModel model = (DefaultTableModel) fileTable.getModel();
+            model.setRowCount(0);
+            ResultSet rs = client.dataManager.getFileList();
+            while (rs.next()) {
+                fileID = rs.getInt("fileID");
+                fileName = rs.getString("fileName");
+                fileSize = rs.getInt("fileSize");
+                hash = rs.getString("fileHash");
+                curSize = rs.getInt("curSize");
+                fileStatus = rs.getString("status");
+                a = client.threadManager.getThread(fileID);
+                if (a != null) {
+                    clientAddr = a.getClientAddr();
+                    rate = a.getRate();
+                } else {
+                    clientAddr = null;
+                    rate = 0;
+                }
+                //   int rate = client.threadManager.getThread(fileID).getRate();
+
+                model.addRow(new Object[]{fileID, fileName, String.valueOf(rate) + "kB", String.valueOf(curSize) + "/" + String.valueOf(fileSize), fileStatus, clientAddr, hash, fileStatus});
+            }
+            // Get the ListSelectionModel of the JTable
+            ListSelectionModel model1 = fileTable.getSelectionModel();
+
+            // set the selected interval of rows. Using the "rowNumber"
+            // variable for the beginning and end selects only that one row.
+            model1.setSelectionInterval(slr, slr);
+        } catch (Exception ex) {
+            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+
+    }
+
     GUI(Client aThis) {
 
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(GUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(GUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(GUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(GUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
 
+        
         initComponents();
 
         client = aThis;
-        
-        fileTable.addMouseListener( new MouseAdapter()
-{
-            @Override
-	public void mouseClicked( MouseEvent e )
-	{
-		// Left mouse click
-		if ( SwingUtilities.isLeftMouseButton( e ) )
-		{
-			// Do something
-		}
-		// Right mouse click
-		else if (SwingUtilities.isRightMouseButton( e ) )
-		{
-			// get the coordinates of the mouse click
-			Point p = e.getPoint();
- 
-			// get the row index that contains that coordinate
-			int rowNumber = fileTable.rowAtPoint( p );
- 
-			// Get the ListSelectionModel of the JTable
-			ListSelectionModel model = fileTable.getSelectionModel();
- 
-			// set the selected interval of rows. Using the "rowNumber"
-			// variable for the beginning and end selects only that one row.
-			model.setSelectionInterval( rowNumber, rowNumber );
-                        function.show(e.getComponent(), e.getX(), e.getY());
+        javax.swing.Timer t = new javax.swing.Timer(1000, new ClockListener());
+        t.start();
 
-                        
-		}
-	}
-});
+        fileTable.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                // Left mouse click
+                if (SwingUtilities.isLeftMouseButton(e)) {
+                    // Do something
+                } // Right mouse click
+                else if (SwingUtilities.isRightMouseButton(e)) {
+                    // get the coordinates of the mouse click
+                    Point p = e.getPoint();
+
+                    // get the row index that contains that coordinate
+                    int rowNumber = fileTable.rowAtPoint(p);
+
+                    // Get the ListSelectionModel of the JTable
+                    ListSelectionModel model = fileTable.getSelectionModel();
+
+                    // set the selected interval of rows. Using the "rowNumber"
+                    // variable for the beginning and end selects only that one row.
+                    model.setSelectionInterval(rowNumber, rowNumber);
+                    function.show(e.getComponent(), e.getX(), e.getY());
+
+
+                }
+            }
+        });
+
+        
+
     }
 
-    private static class ClockListener implements ActionListener {
+    private class ClockListener implements ActionListener {
 
         public ClockListener() {
         }
 
         @Override
         public void actionPerformed(ActionEvent ae) {
-            System.out.println("Acted");
+            System.out.println("Draw");
+            drawTable();
             //throw new UnsupportedOperationException("Not supported yet.");
         }
-    }
-
-    /** Creates new form GUI */
-    public GUI() {
-        initComponents();
     }
 
     /** This method is called from within the constructor to
@@ -164,6 +191,10 @@ public class GUI extends javax.swing.JFrame {
         jMenu2 = new javax.swing.JMenu();
         jMenuItem3 = new javax.swing.JMenuItem();
 
+        function.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        function.setFocusable(false);
+        function.setRequestFocusEnabled(false);
+
         jMenuItem8.setText("Share file");
         function.add(jMenuItem8);
 
@@ -182,6 +213,8 @@ public class GUI extends javax.swing.JFrame {
         jMenuItem7.setText("Limit rate");
         function.add(jMenuItem7);
 
+        function.getAccessibleContext().setAccessibleParent(fileTable);
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         fileTable.setModel(new javax.swing.table.DefaultTableModel(
@@ -192,7 +225,7 @@ public class GUI extends javax.swing.JFrame {
                 {null, null, null, null, null, null, null}
             },
             new String [] {
-                "File ID", "File Name", "Download Speed", "Upload Speed", "Client IP", "Hash", "Status"
+                "File ID", "File Name", "Down [Up] Speed", "Done", "Client IP", "Hash", "Status"
             }
         ) {
             Class[] types = new Class [] {
@@ -211,18 +244,17 @@ public class GUI extends javax.swing.JFrame {
             }
         });
         fileTable.setAutoscrolls(false);
-        fileTable.setCellSelectionEnabled(false);
         fileTable.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         fileTable.setFillsViewportHeight(true);
         fileTable.setInheritsPopupMenu(true);
-        fileTable.setRowSelectionAllowed(true);
         fileTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        fileTable.setShowHorizontalLines(false);
-        fileTable.setShowVerticalLines(false);
         fileTable.getTableHeader().setReorderingAllowed(false);
         fileTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 fileTableMouseClicked(evt);
+            }
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                fileTableMousePressed(evt);
             }
             public void mouseReleased(java.awt.event.MouseEvent evt) {
                 fileTableMouseReleased(evt);
@@ -230,8 +262,7 @@ public class GUI extends javax.swing.JFrame {
         });
         jScrollPane1.setViewportView(fileTable);
         fileTable.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        fileTable.getColumnModel().getColumn(2).setPreferredWidth(110);
-        fileTable.getColumnModel().getColumn(3).setPreferredWidth(110);
+        fileTable.getColumnModel().getColumn(2).setPreferredWidth(120);
 
         jMenu1.setText("File");
 
@@ -288,7 +319,7 @@ public class GUI extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 335, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
         );
 
         java.awt.Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
@@ -324,19 +355,13 @@ private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
     if (jFC.getSelectedFile() != null) {
         System.out.println(jFC.getSelectedFile().getAbsolutePath());
     }
-    String str = JOptionPane.showInputDialog(null, "Enter server address: ", "Server for sharing", 1);
-
-
 
 }//GEN-LAST:event_jMenuItem1ActionPerformed
 
 private void jMenuItem4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem4ActionPerformed
 // TODO add your handling code here:
 
-    String str = JOptionPane.showInputDialog(null, "Enter server address: ", "Input", 1);
     String str1 = JOptionPane.showInputDialog(null, "Enter file ID: ", "Server for downloading", 1);
-
-
 
 }//GEN-LAST:event_jMenuItem4ActionPerformed
 
@@ -345,46 +370,11 @@ private void fileTableMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:
 }//GEN-LAST:event_fileTableMouseReleased
 
 private void fileTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_fileTableMouseClicked
-
 }//GEN-LAST:event_fileTableMouseClicked
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(GUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(GUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(GUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(GUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        javax.swing.Timer t = new javax.swing.Timer(1000, new ClockListener());
-        t.start();
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                new GUI().setVisible(true);
-            }
-        });
-    }
+    private void fileTableMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_fileTableMousePressed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_fileTableMousePressed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable fileTable;
     private javax.swing.JPopupMenu function;

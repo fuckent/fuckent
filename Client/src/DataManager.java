@@ -4,6 +4,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 /*
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
@@ -18,12 +20,21 @@ public class DataManager {
     private Statement statement;
     private Connection connection;
 
-    public void addFile(int fileID, String fileName, int fileSize, int curSize, String fileStatus) {
-        // TODO: SQL Statement HERE!!!
+    public void addFile(int fileID, String fileName, int fileSize, int curSize, String hash, String fileStatus) {
+        try {
+                statement.executeUpdate("insert into FileManager values (" + fileID + ", '" + fileName + "', " +  fileSize + ", 0   , '" + hash  + "' ,   null   )");
+        } catch (SQLException ex) {
+            Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     public void removeFile(int fileID) {
-        // TODO: SQL Statement HERE!!!
+        try {
+            statement.executeUpdate("delete from FileManager where fileID = " + fileID);
+        } catch (SQLException ex) {
+            Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
     }
 
     /**
@@ -31,10 +42,16 @@ public class DataManager {
      * 
      * @return 
      */
-    public ResultSet listFile() {
-        // TODO: SQL !!!
+    public ResultSet getFileList() {
+        try {
+            return statement.executeQuery("select * from FileManager");
+        } catch (SQLException ex) {
+            Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
         return null;
     }
+
 
     public DataManager() {
         try {

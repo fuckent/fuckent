@@ -7,8 +7,13 @@
  *
  * @author thong
  */
-abstract class ClientThread extends Thread{
+abstract class ClientThread extends Thread {
+
     abstract public void setRate(int speed);
+
     abstract public void closeThread();
+
     abstract public int getRate();
+
+    abstract public String getClientAddr();
 }

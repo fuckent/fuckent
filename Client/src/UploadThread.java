@@ -5,7 +5,6 @@ import java.net.Socket;
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-
 /**
  * This class upload a file to another client.
  * 
@@ -13,22 +12,20 @@ import java.net.Socket;
  * 
  * @author thong
  */
-class UploadThread extends ClientThread{
-    
-    private DataManager dataManager;
-    private ThreadManager threadManager;    
+class UploadThread extends ClientThread {
+
+
     private Socket conn;
     private boolean exitRequest;
     private int rate;
     private int speed;
+    private Client client;
 
-    UploadThread(Socket conn, DataManager dataManager, ThreadManager threadManager) {
+    UploadThread(Socket conn, Client client) {
         this.conn = conn;
-        this.dataManager = dataManager;
-        this.threadManager = threadManager;
+        this.client = client;
     }
-    
-    
+
     /**
      * Recv input from client (DOWNLOAD - RATE) and respond
      * 
@@ -41,7 +38,6 @@ class UploadThread extends ClientThread{
         // TODO: CODE HERE
         // read input from client and respond
         // Use System.currentTimeMilis to get current time
-        
     }
 
     /**
@@ -66,9 +62,12 @@ class UploadThread extends ClientThread{
         /**
          * GUI call this function to get upload speed and then show on fileTable (GUI)
          */
-        
         return this.speed;
         // throw new UnsupportedOperationException("Not supported yet.");
     }
-    
+
+    @Override
+    public String getClientAddr() {
+        return conn.getRemoteSocketAddress().toString();
+    }
 }

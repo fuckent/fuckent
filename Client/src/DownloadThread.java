@@ -7,10 +7,9 @@
  *
  * @author thong
  */
-class DownloadThread extends ClientThread{
-    
+class DownloadThread extends ClientThread {
+
     public void Run() {
-        
     }
 
     public DownloadThread() {
@@ -30,5 +29,9 @@ class DownloadThread extends ClientThread{
     public int getRate() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
-    
+
+    @Override
+    public String getClientAddr() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 }

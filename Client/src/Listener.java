@@ -14,12 +14,11 @@ import java.net.Socket;
 public class Listener implements Runnable {
 
     private ServerSocket listener;
-    private DataManager dataManager;
-    private ThreadManager threadManager;
 
-    Listener(int port, DataManager dataManager, ThreadManager threadManager) {
-        this.dataManager = dataManager;
-        this.threadManager = threadManager;
+    private Client client;
+
+    Listener(int port, Client client) {
+        this.client = client;
         
         try {
             listener = new ServerSocket(port);
@@ -40,7 +39,7 @@ public class Listener implements Runnable {
                 Socket conn = listener.accept();
 
                 /* create a new thread UploadThread to deal with this connection */
-                Thread t = new Thread(new UploadThread(conn, dataManager, threadManager));
+                Thread t = new Thread(new UploadThread(conn, this.client));
                 t.start();
 
                 // TODO Print LOG message HERE!
