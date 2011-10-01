@@ -25,7 +25,8 @@ public class Client {
         this.dataManager = new DataManager();
         this.threadManager = new ThreadManager();
         this.serverPI = new ServerPI(serverAddr, 5321);
-        this.listener = new Listener(port);
+        this.listener = new Listener(port, dataManager, threadManager);
+        new Thread(listener).start();
 
         this.gui = new GUI(this);
         this.gui.setVisible(true);
