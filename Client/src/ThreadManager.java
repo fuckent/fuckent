@@ -14,9 +14,9 @@ public class ThreadManager {
     
     
     /* Use java.util.Dictionary Class here */
-    Hashtable<Integer, Thread> dic;
+    Hashtable<Integer, ClientThread> dic;
     
-    public void addThread(int FileID, Thread t) {
+    public void addThread(int FileID, ClientThread t) {
         dic.put(new Integer(FileID), t);
     }
     
@@ -29,7 +29,7 @@ public class ThreadManager {
     }
 
     public ThreadManager() {
-        this.dic = new Hashtable<Integer, Thread>();
+        this.dic = new Hashtable<Integer, ClientThread>();
     }
     
 }

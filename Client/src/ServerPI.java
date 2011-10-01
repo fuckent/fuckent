@@ -18,10 +18,11 @@ public class ServerPI {
 
     private Socket con;
 
-    public Vector<String> download(int fileID, String hash) {
+    public String download(int fileID, String hash) {
         // TODO: CODE HERE
         // This function tell server that client want to download a file !
         // and return a list of clients' addr having that file!
+        // randomly choose  a client to  to download
 
         return null;
 
