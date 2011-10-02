@@ -22,6 +22,14 @@
       <SubComponents>
         <MenuItem class="javax.swing.JMenuItem" name="jMenuItem8">
           <Properties>
+            <Property name="text" type="java.lang.String" value="Seed file"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jMenuItem8ActionPerformed"/>
+          </Events>
+        </MenuItem>
+        <MenuItem class="javax.swing.JMenuItem" name="jMenuItem13">
+          <Properties>
             <Property name="text" type="java.lang.String" value="Share file"/>
           </Properties>
         </MenuItem>
@@ -50,6 +58,19 @@
             <Property name="text" type="java.lang.String" value="Limit rate"/>
           </Properties>
         </MenuItem>
+        <MenuItem class="javax.swing.JMenuItem" name="jMenuItem11">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="About"/>
+          </Properties>
+        </MenuItem>
+        <MenuItem class="javax.swing.JMenuItem" name="jMenuItem12">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Quit"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jMenuItem12ActionPerformed"/>
+          </Events>
+        </MenuItem>
       </SubComponents>
     </Container>
     <Menu class="javax.swing.JMenuBar" name="jMenuBar1">
@@ -61,7 +82,7 @@
           <SubComponents>
             <MenuItem class="javax.swing.JMenuItem" name="jMenuItem1">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Share file"/>
+                <Property name="text" type="java.lang.String" value="Seed file"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jMenuItem1ActionPerformed"/>
@@ -136,7 +157,7 @@
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="jScrollPane1" pref="341" max="32767" attributes="0"/>
+          <Component id="jScrollPane1" pref="343" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
@@ -151,7 +172,7 @@
         <Component class="javax.swing.JTable" name="fileTable">
           <Properties>
             <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
-              <Table columnCount="7" rowCount="4">
+              <Table columnCount="7" rowCount="0">
                 <Column editable="false" title="File ID" type="java.lang.Integer"/>
                 <Column editable="false" title="File Name" type="java.lang.String"/>
                 <Column editable="false" title="Down [Up] Speed" type="java.lang.String"/>

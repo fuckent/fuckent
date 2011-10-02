@@ -12,7 +12,7 @@ import java.net.Socket;
  * 
  * @author thong
  */
-class UploadThread extends ClientThread {
+class UploadThread extends ClientThread implements Runnable{
 
 
     private Socket conn;
@@ -34,7 +34,7 @@ class UploadThread extends ClientThread {
      *          reach limit rate
      * 
      */
-    public void Run() {
+    public void run() {
         // TODO: CODE HERE
         // read input from client and respond
         // Use System.currentTimeMilis to get current time

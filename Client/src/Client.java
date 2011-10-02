@@ -1,8 +1,7 @@
 
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+import javax.swing.UIManager;
 
 /*
  * To change this template, choose Tools | Templates
@@ -20,25 +19,24 @@ public class Client {
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
          */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(GUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(GUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(GUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(GUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
+        // com.sun.java.swing.plaf.windows.WindowsLookAndFeel
+        //javax.swing.plaf.metal.MetalLookAndFeel
+        //MetalLookAndFeel a = 
+       //MetalLookAndFeel.setCurrentTheme(new javax.swing.plaf.metal.OceanTheme());
+        
+     try {
+              UIManager.setLookAndFeel(
+                  new javax.swing.plaf.metal.MetalLookAndFeel()
+              );
+         // set UI manager properties here that affect Quaqua
+         
+         } catch (Exception e) {
+             // take an appropriate action here
+             
+         }        //</editor-fold>
         
         System.out.println("Client Started!");
+        
         Client client = new Client("127.0.0.1", 1235);
 
     }
@@ -50,6 +48,12 @@ public class Client {
     public GUI gui;
 
     private Client(String serverAddr, int port) {
+        //SeedThread st = new SeedThread(this);
+        //long t1 = System.currentTimeMillis();
+        //System.out.println(st.getMD5Hash("/home/thong/Downloads/hihi.part1"));
+        //long t2 = System.currentTimeMillis();
+        //System.out.println(t2-t1);
+        
         this.dataManager = new DataManager();
         this.threadManager = new ThreadManager();
         this.listener = new Listener(port, this);
@@ -69,6 +73,12 @@ public class Client {
 
         
         this.gui = new GUI(this);
-        this.gui.setVisible(true);
+        java.awt.EventQueue.invokeLater(new Runnable() {
+
+            public void run() {
+                gui.setVisible(true);
+            }
+        });
+    
     }
 }

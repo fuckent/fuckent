@@ -7,7 +7,7 @@
  *
  * @author thong
  */
-abstract class ClientThread extends Thread {
+abstract class ClientThread {
 
     abstract public void setRate(int speed);
 

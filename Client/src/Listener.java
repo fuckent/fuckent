@@ -34,6 +34,7 @@ public class Listener implements Runnable {
         /* Listen connection from client */
 
         while (true) {
+            System.out.println("Hello");
             try {
                 System.out.println("Waiting a new connection from other client");
                 Socket conn = listener.accept();

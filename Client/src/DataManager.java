@@ -20,15 +20,16 @@ public class DataManager {
     private Statement statement;
     private Connection connection;
 
-    public void addFile(int fileID, String fileName, int fileSize, int curSize, String hash, String fileStatus) {
+    public synchronized void addFile(int fileID, String fileName, long fileSize, long curSize, String hash, String fileStatus, String fileLocation) {
         try {
-                statement.executeUpdate("insert into FileManager values (" + fileID + ", '" + fileName + "', " +  fileSize + ", 0   , '" + hash  + "' ,   null   )");
+            
+                statement.executeUpdate(String.format("insert into FileManager values (%d, '%s', %d, %d, '%s', '%s', '%s')", fileID, fileName, fileSize, curSize, hash, fileStatus, fileLocation));
         } catch (SQLException ex) {
             Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public void removeFile(int fileID) {
+    public synchronized void removeFile(int fileID) {
         try {
             statement.executeUpdate("delete from FileManager where fileID = " + fileID);
         } catch (SQLException ex) {
@@ -42,7 +43,7 @@ public class DataManager {
      * 
      * @return 
      */
-    public ResultSet getFileList() {
+    public synchronized ResultSet getFileList() {
         try {
             return statement.executeQuery("select * from FileManager");
         } catch (SQLException ex) {
@@ -69,7 +70,7 @@ public class DataManager {
             statement.setQueryTimeout(30);  // set timeout to 30 sec.
 
             /* Create a new database structure */
-            statement.executeUpdate("create table if not exists FileManager (fileID INTEGER PRIMARY KEY, fileName VARCHAR, fileSize INTEGER, curSize INTERGER, fileHash VARCHAR, status VARCHAR)");
+            statement.executeUpdate("create table if not exists FileManager (fileID INTEGER PRIMARY KEY, fileName VARCHAR, fileSize INTEGER, curSize INTERGER, fileHash VARCHAR, status VARCHAR, fileLocation VARCHAR)");
 
         } catch (SQLException e) {
             // TODO: CODE HERE!!

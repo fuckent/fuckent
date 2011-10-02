@@ -1,7 +1,11 @@
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Random;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -16,40 +20,78 @@ import java.util.logging.Logger;
  */
 public class ServerPI {
 
+    InputStreamReader in = null;
+    BufferedReader reader;
+    PrintWriter out;
     private Socket con;
 
-    public String download(int fileID, String hash) {
-        // TODO: CODE HERE
-        // This function tell server that client want to download a file !
-        // and return a list of clients' addr having that file!
-        // randomly choose  a client to  to download
+    public synchronized String download(int fileID, String hash) {
+        String[] lst;
+        try {
+            out.format("DOWNLOAD %d %s\n", fileID, hash).flush();
+
+            String str = reader.readLine();
+            if (str.matches("DOWNLOAD [^ ]+( [^ ]+)+")) {
+                lst = str.split(" ");
+                if (lst[1].equals("ERROR")) {
+                    System.err.println("Error when DOWNLOAD REQ server");
+                } else {
+                    if (lst.length == 0) {
+                        return null;
+                    }
+                    return lst[new Random().nextInt(lst.length)];
+                }
+            }
+
+            return null;
+        } catch (IOException ex) {
+            Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            try {
+                in.close();
+            } catch (IOException ex) {
+                Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
 
         return null;
 
     }
 
-    public void share(int fileID, String hash) {
+    public synchronized void share(int fileID, String hash) {
         // TODO: CODE HERE 
         // tell server we want share a file !!!
     }
 
-    public void unshare(int fileID) {
+    public synchronized void unshare(int fileID) {
         // TODO: CODE HRE
         // tell server we want unshare a file!!!
     }
 
-    public int seed(String fileName, String hash) {
-        // TODO: CODE 
-        // tell server we want seed a file
-        // and server return fileID
+    public synchronized int seed(String fileName, long fileSize, String hash) {
+        String[] lst;
+        
+        try {
+            out.format("SEED %s %d %s\n", fileName, fileSize, hash).flush();
 
+            String str = reader.readLine();
+            if (str.matches("SEED [^ ]+")) {
+                lst = str.split(" ");
+                return new Integer(lst[1]).intValue();
+                }
+        } catch (IOException ex) {
+            Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+        } 
         return 0;
     }
 
     public ServerPI(String serverAddr, int port) throws IOException {
 
-            con = new Socket(serverAddr, port);
+        con = new Socket(serverAddr, port);
 
+        this.in = new InputStreamReader(con.getInputStream());
+        this.reader = new BufferedReader(in);
+        this.out = new PrintWriter(con.getOutputStream());
 
     }
 }
