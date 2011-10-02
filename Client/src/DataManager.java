@@ -70,7 +70,7 @@ public class DataManager {
             statement.setQueryTimeout(30);  // set timeout to 30 sec.
 
             /* Create a new database structure */
-            statement.executeUpdate("create table if not exists FileManager (fileID INTEGER PRIMARY KEY, fileName VARCHAR, fileSize INTEGER, curSize INTERGER, fileHash VARCHAR, status VARCHAR, fileLocation VARCHAR)");
+            statement.executeUpdate("create table if not exists FileManager (fileID INTEGER PRIMARY KEY, fileName VARCHAR, fileSize BIGINT, curSize BIGINT, fileHash VARCHAR, status VARCHAR, fileLocation VARCHAR)");
 
         } catch (SQLException e) {
             // TODO: CODE HERE!!

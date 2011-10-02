@@ -75,12 +75,12 @@ public class GUI extends javax.swing.JFrame {
     public void drawTable() {
         int fileID;
         String fileName;
-        int fileSize;
-        int curSize;
+        long fileSize;
+        long curSize;
         String fileStatus;
         String clientAddr;
         String hash;
-        int rate;
+        long rate;
         ClientThread a;
         int slr = fileTable.getSelectedRow();
         try {
@@ -90,9 +90,10 @@ public class GUI extends javax.swing.JFrame {
             while (rs.next()) {
                 fileID = rs.getInt("fileID");
                 fileName = rs.getString("fileName");
-                fileSize = rs.getInt("fileSize");
+                fileSize = rs.getLong("fileSize");
+                System.out.println(fileSize);
                 hash = rs.getString("fileHash");
-                curSize = rs.getInt("curSize");
+                curSize = rs.getLong("curSize");
                 fileStatus = rs.getString("status");
                 a = client.threadManager.getThread(fileID);
                 if (a != null) {
@@ -104,7 +105,7 @@ public class GUI extends javax.swing.JFrame {
                 }
                 //   int rate = client.threadManager.getThread(fileID).getRate();
 
-                model.addRow(new Object[]{fileID, fileName, String.valueOf(rate) + "kB", String.valueOf(curSize) + "/" + String.valueOf(fileSize), clientAddr, hash, fileStatus});
+                model.addRow(new Object[]{fileID, fileName, String.valueOf(rate) + "  bytes", String.valueOf(curSize) + "/" + String.valueOf(fileSize), clientAddr, hash, fileStatus});
             }
             // Get the ListSelectionModel of the JTable
             ListSelectionModel model1 = fileTable.getSelectionModel();

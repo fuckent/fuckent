@@ -20,6 +20,7 @@ public class ServerDataManager {
             // TODO: SQL Statement add this file to database
             // Similar ClientManager ...
             String str = String.format("insert into FileManager values (null, '%s', %d, '%s')", FileName, FileSize, Hash);
+            System.out.println(str);
             statement.executeUpdate(str);
             str = String.format("select fileID from FileManager where fileName = '%s' and fileHash = '%s'", FileName, Hash);
             ResultSet rs = statement.executeQuery(str);
@@ -60,7 +61,7 @@ public class ServerDataManager {
             statement.setQueryTimeout(30);  // set timeout to 30 sec.
 
             /* Create a new database structure */
-            statement.executeUpdate("create table if not exists FileManager (fileID INTEGER PRIMARY KEY, fileName VARCHAR, fileSize INTEGER, fileHash VARCHAR)");
+            statement.executeUpdate("create table if not exists FileManager (fileID INTEGER PRIMARY KEY, fileName VARCHAR, fileSize BIGINT, fileHash VARCHAR)");
             // statement.executeUpdate("insert into FileManager values(NULL, 531, '123')");
             //			statement.e
             //			connection.close();
