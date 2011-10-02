@@ -20,7 +20,7 @@ public class ServerDataManager {
             // TODO: SQL Statement add this file to database
             // Similar ClientManager ...
             String str = String.format("insert into FileManager values (null, '%s', %d, '%s')", FileName, FileSize, Hash);
-            System.out.println(str);
+            // System.out.println(str);
             statement.executeUpdate(str);
             str = String.format("select fileID from FileManager where fileName = '%s' and fileHash = '%s'", FileName, Hash);
             ResultSet rs = statement.executeQuery(str);
