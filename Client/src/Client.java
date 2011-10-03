@@ -10,7 +10,7 @@ import javax.swing.UIManager;
 
 /**
  *
- * @author thong
+ * @author thong - tin
  */
 public class Client {
 
