@@ -132,7 +132,7 @@ public class ClientManager {
 		try
 		{
 			// create a database connection
-			connection = DriverManager.getConnection("jdbc:sqlite:memory:");
+			connection = DriverManager.getConnection("jdbc:sqlite::memory:");
 			statement = connection.createStatement();
 			statement.setQueryTimeout(30);  // set timeout to 30 sec.
 
