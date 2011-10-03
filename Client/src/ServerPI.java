@@ -3,9 +3,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.Random;
-import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
