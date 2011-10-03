@@ -26,34 +26,7 @@ public class ServerPI {
     private Socket con;
 
     public synchronized String download(int fileID, String hash) {
-        String[] lst;
-        try {
-            out.format("DOWNLOAD %d %s\n", fileID, hash).flush();
-
-            String str = reader.readLine();
-            if (str.matches("DOWNLOAD [^ ]+( [^ ]+)+")) {
-                lst = str.split(" ");
-                if (lst[1].equals("ERROR")) {
-                    System.err.println("Error when DOWNLOAD REQ server");
-                } else {
-                    if (lst.length == 0) {
-                        return null;
-                    }
-                    return lst[new Random().nextInt(lst.length)];
-                }
-            }
-
-            return null;
-        } catch (IOException ex) {
-            Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            try {
-                in.close();
-            } catch (IOException ex) {
-                Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
+        // TODO: CODE HERE!!!
         return null;
 
     }
