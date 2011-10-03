@@ -25,7 +25,7 @@ public class ServerDataManager {
             ResultSet rs = statement.executeQuery(str);
 
             while (rs.next()) {
-                return rs.getLong("fileID");
+                return rs.getInt("fileID");
             }
 
         } catch (SQLException ex) {
