@@ -1,4 +1,3 @@
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -26,7 +25,7 @@ public class ServerDataManager {
             ResultSet rs = statement.executeQuery(str);
 
             while (rs.next()) {
-                return rs.getInt("fileID");
+                return rs.getLong("fileID");
             }
 
         } catch (SQLException ex) {
