@@ -1,4 +1,3 @@
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -133,17 +132,12 @@ public class ClientManager {
 		try
 		{
 			// create a database connection
-			connection = DriverManager.getConnection("jdbc:sqlite:sample.db");
+			connection = DriverManager.getConnection("jdbc:sqlite:memory:");
 			statement = connection.createStatement();
 			statement.setQueryTimeout(30);  // set timeout to 30 sec.
 
 			/* Create a new database structure */
 			statement.executeUpdate("create table clientManager (clientAddr string, clientPort int, fileID int)");
-			//statement.executeUpdate("insert into clientManager values('127.0.0.1', 531, 123)");
-			//			statement.e
-			//			connection.close();
-			//			statement.executeUpdate("insert into person values(2, 'yui')");
-
 		}
 		catch(SQLException e)
 		{
