@@ -61,7 +61,7 @@ public class DataManager {
             System.out.println("Can't found sqlite library");
             System.exit(0);
         }
-
+        // testing
         connection = null;
         try {
             // create a database connection
