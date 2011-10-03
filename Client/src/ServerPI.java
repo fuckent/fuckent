@@ -1,3 +1,4 @@
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -22,9 +23,7 @@ public class ServerPI {
     private Socket con;
 
     public synchronized String download(int fileID, String hash) {
-        // TODO: CODE HERE
-        // tell server we want download a file!!!
-
+        // TODO: CODE HERE!!!
         return null;
 
     }

@@ -22,7 +22,8 @@ public class DataManager {
 
     public synchronized void addFile(int fileID, String fileName, long fileSize, long curSize, String hash, String fileStatus, String fileLocation) {
         try {
-            statement.executeUpdate(String.format("insert into FileManager values (%d, '%s', %d, %d, '%s', '%s', '%s')", fileID, fileName, fileSize, curSize, hash, fileStatus, fileLocation));
+            
+                statement.executeUpdate(String.format("insert into FileManager values (%d, '%s', %d, %d, '%s', '%s', '%s')", fileID, fileName, fileSize, curSize, hash, fileStatus, fileLocation));
         } catch (SQLException ex) {
             Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -48,9 +49,10 @@ public class DataManager {
         } catch (SQLException ex) {
             Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
         }
-
+        
         return null;
     }
+
 
     public DataManager() {
         try {
@@ -68,7 +70,7 @@ public class DataManager {
             statement.setQueryTimeout(30);  // set timeout to 30 sec.
 
             /* Create a new database structure */
-            statement.executeUpdate("create table if not exists FileManager (fileID INTEGER PRIMARY KEY, fileName VARCHAR, fileSize BIGINT, curSize BIGINT, fileHash VARCHAR, status VARCHAR, fileLocation VARCHAR)");
+            statement.executeUpdate("create table if not exists FileManager (fileID INTEGER PRIMARY KEY, fileName VARCHAR, fileSize INTEGER, curSize INTERGER, fileHash VARCHAR, status VARCHAR, fileLocation VARCHAR)");
 
         } catch (SQLException e) {
             // TODO: CODE HERE!!
