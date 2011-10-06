@@ -61,9 +61,15 @@ public class GUI extends javax.swing.JFrame {
         String Hash = (String)model.getValueAt(row, 5);
         System.out.println("User wants to share file: " + ID);
 
-        client.serverPI.share(ID, Hash);
-    }
+        Boolean share = client.serverPI.share(ID, Hash);
+        if(share){
+            client.dataManager.updateStatus(ID, "SHARING...");
+            JOptionPane.showMessageDialog(null, "Share file success", null, 1);
+        }else{
+            JOptionPane.showMessageDialog(null, "Share file false", "ERROR", 0);
+        }
 
+    }
     private void unShareFile(int fileID) {
         System.out.print("User wants to unshare file: " + fileID);
     }
