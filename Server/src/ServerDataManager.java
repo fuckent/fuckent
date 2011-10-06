@@ -35,13 +35,17 @@ public class ServerDataManager {
         return 0;
     }
 
-    public synchronized Boolean haveFile(int FileID) {
-        // TODO: CODE HERE!!!  
-        // check if database have a file by FileID
-        //
-
-        return null;
-
+    public synchronized Boolean haveFile(int FileID, String Hash) {
+        try {
+            // TODO: CODE HERE!!!
+            // check if database have a file by FileID
+            String sql = String.format("select * from FileManager where fileID = %d and fileHash = '%s'", FileID, Hash);
+            ResultSet rs = statement.executeQuery(sql);
+            return rs.next();
+        } catch (SQLException ex) {
+            Logger.getLogger(ServerDataManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
     }
 
     public ServerDataManager() {
@@ -55,7 +59,7 @@ public class ServerDataManager {
         connection = null;
         try {
             // create a database connection
-            connection = DriverManager.getConnection("jdbc:sqlite::memory:");
+            connection = DriverManager.getConnection("jdbc:sqlite:server.db");
             statement = connection.createStatement();
             statement.setQueryTimeout(30);  // set timeout to 30 sec.
 
@@ -91,4 +95,6 @@ public class ServerDataManager {
         //do finalization here
         super.finalize(); //not necessary if extending Object.
     }
+
+
 }

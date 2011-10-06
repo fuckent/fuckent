@@ -28,9 +28,22 @@ public class ServerPI {
 
     }
 
-    public synchronized void share(int fileID, String hash) {
-        // TODO: CODE HERE 
-        // tell server we want share a file !!!
+    public synchronized Boolean share(int fileID, String hash) {
+        try {
+            // TODO: CODE HERE
+            // tell server we want share a file !!!
+            out.format("SHARE %d %s\n", fileID, hash).flush();
+            String str = reader.readLine();
+            if (str.matches("OK")) {
+                return true;
+                }
+            if (str.matches("ERROR")) {
+                return false;
+                }
+        } catch (IOException ex) {
+            Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
     }
 
     public synchronized void unshare(int fileID) {

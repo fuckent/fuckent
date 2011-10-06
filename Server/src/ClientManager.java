@@ -5,6 +5,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This class manage client information by SQLite in a virtual file in memory (fast!)
@@ -25,6 +27,7 @@ public class ClientManager {
      * @return a Vector<String> 
      */
     public synchronized Vector<String> getListClient(int fileID) {
+    	//
         try {
             ResultSet rs = statement.executeQuery("select clientAddr, clientPort from clientManager where fileID = " + fileID);
             Vector<String> v = new Vector<String>();
@@ -49,7 +52,17 @@ public class ClientManager {
         return null;
 
     }
+    public synchronized Boolean haveSharedFile(String clientAddr, int port, int fileID) {
+        try {
+            ResultSet rs = statement.executeQuery("select clientAddr, clientPort from clientManager where fileID = " + fileID +" clientAddr = " +clientAddr + " clientPort = " + port);
+            return rs.next();
 
+
+        } catch (SQLException ex) {
+            Logger.getLogger(ClientManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
     public synchronized void addClientFile(String clientAddr, int port, int fileID) {
         try {
             statement.executeUpdate("insert into clientManager values ('" + clientAddr + "', " + port + ", " + fileID + ")");
@@ -114,11 +127,12 @@ public class ClientManager {
         connection = null;
         try {
             // create a database connection
-            connection = DriverManager.getConnection("jdbc:sqlite::memory:");
+            connection = DriverManager.getConnection("jdbc:sqlite:cdata.db");
             statement = connection.createStatement();
             statement.setQueryTimeout(30);  // set timeout to 30 sec.
 
             /* Create a new database structure */
+            statement.executeUpdate("drop table if exists clientManager");
             statement.executeUpdate("create table clientManager (clientAddr string, clientPort int, fileID int)");
             //statement.executeUpdate("insert into clientManager values('127.0.0.1', 531, 123)");
             //			statement.e

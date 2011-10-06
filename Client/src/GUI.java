@@ -23,6 +23,7 @@ import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 
 /**
  *
@@ -34,6 +35,7 @@ public class GUI extends javax.swing.JFrame {
 
     // TODO: CODE FROM HERE!!!
     private void downloadFile(int fileID) {
+
         System.out.println("User wants to download file: " + fileID);
     }
 
@@ -42,7 +44,7 @@ public class GUI extends javax.swing.JFrame {
         Thread t = new Thread(new SeedThread(this.client, path));
                 System.out.println(t.getPriority());
 
-        t.setDaemon(true);
+       // t.setDaemon(true);
        t.start();
         
         
@@ -51,8 +53,15 @@ public class GUI extends javax.swing.JFrame {
         return 0;
     }
 
-    private void shareFile(int fileID) {
-        System.out.println("User wants to share file: " + fileID);
+    private void shareFile() {
+        
+        int row =fileTable.getSelectedRow();
+        DefaultTableModel model = (DefaultTableModel) fileTable.getModel();
+        int ID = (Integer)model.getValueAt(row, 0);//);
+        String Hash = (String)model.getValueAt(row, 5);
+        System.out.println("User wants to share file: " + ID);
+
+        client.serverPI.share(ID, Hash);
     }
 
     private void unShareFile(int fileID) {
@@ -216,6 +225,11 @@ public class GUI extends javax.swing.JFrame {
         function.add(jMenuItem8);
 
         jMenuItem13.setText("Share file");
+        jMenuItem13.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem13ActionPerformed(evt);
+            }
+        });
         function.add(jMenuItem13);
 
         jMenuItem10.setText("Download file");
@@ -272,11 +286,9 @@ public class GUI extends javax.swing.JFrame {
             }
         });
         fileTable.setAutoscrolls(false);
-        fileTable.setCellSelectionEnabled(false);
         fileTable.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         fileTable.setFillsViewportHeight(true);
         fileTable.setInheritsPopupMenu(true);
-        fileTable.setRowSelectionAllowed(true);
         fileTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         fileTable.getTableHeader().setReorderingAllowed(false);
         fileTable.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -345,11 +357,11 @@ public class GUI extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 657, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 652, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 343, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 335, Short.MAX_VALUE)
         );
 
         java.awt.Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
@@ -416,6 +428,11 @@ private void fileTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         // TODO add your handling code here:
         System.exit(0);
     }//GEN-LAST:event_jMenuItem12ActionPerformed
+
+    private void jMenuItem13ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem13ActionPerformed
+        // TODO add your handling code here:
+        this.shareFile();
+    }//GEN-LAST:event_jMenuItem13ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable fileTable;

@@ -19,6 +19,7 @@ public class Listener implements Runnable {
 
     Listener(int port, Client client) {
         this.client = client;
+        // client.dataManager.
         
         try {
             listener = new ServerSocket(port);

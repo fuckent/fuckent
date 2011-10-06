@@ -10,7 +10,7 @@ public class ServerPI implements Runnable {
     /* Use  variables below to interactive with the Database */
     private ClientManager cm;
     private ServerDataManager sdm;
-
+//cm.
     public ServerPI(Socket con, ClientManager cm, ServerDataManager sdm) {
         this.cm = cm;
         this.sdm = sdm;
@@ -47,7 +47,7 @@ public class ServerPI implements Runnable {
 
                     } else if (line.matches("SHARE [^ ]+ [^ ]+")) {
                         String[] lst = line.split(" ");
-                        share(lst[1], lst[2]);
+                        share(new Integer(lst[1]).intValue(), lst[2]);
                     } else if (line.matches("UNSHARE [^ ]+ [^ ]+")) {
                         String[] lst = line.split(" ");
                         unshare(lst[1], lst[2]);
@@ -72,20 +72,21 @@ public class ServerPI implements Runnable {
 
     }
 
-    private void seed(String FileName, String Size, String Hash) throws UnsupportedEncodingException {
-        // 
-        System.out.println("SEED REQ");
-        //long size = new .
-
-        Long size = new Long(Size);
-        //size.
-
-        int fileID = sdm.addFile(
-                java.net.URLDecoder.decode(FileName, "ISO-8859-1"), size.longValue(), Hash);
+    private void seed(String FileName, String Size, String Hash)  {
 
         try {
-            new PrintWriter(con.getOutputStream()).format("SEED %d\n", fileID).flush();
-        } catch (IOException ex) {
+//
+                        System.out.println("SEED REQ");
+            //long size = new .
+            Long size = new Long(Size);
+            //size.
+            int fileID = sdm.addFile(java.net.URLDecoder.decode(FileName, "ISO-8859-1"), size.longValue(), Hash);
+            try {
+                new PrintWriter(con.getOutputStream()).format("SEED %d\n", fileID).flush();
+            } catch (IOException ex) {
+                Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } catch (UnsupportedEncodingException ex) {
             Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
         }
 
@@ -97,10 +98,33 @@ public class ServerPI implements Runnable {
 
     }
 
-    private void share(String FileID, String Hash) {
+    private void share(int FileID, String Hash) {
         // TODO process SHARE request
         System.out.println("SHAR REQ");
+        Boolean check = sdm.haveFile(FileID, Hash);
+        SocketAddress Addr;
+        if(!check){
+            try {
+                new PrintWriter(con.getOutputStream()).format("ERROR\n").flush();
+            } catch (IOException ex) {
+                Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        else{
+            try {
+                //  Addr = con.getRemoteSocketAddress();
+                //String Addrstring = Addr.toString();
+                //  int Port = (Integer)con.getPort();
+                String addr = con.getInetAddress().toString();
+                int port =  (Integer)(con.getPort());
+               // String Addr = con.getInetAddress()).toString();
 
+                new PrintWriter(con.getOutputStream()).format("OK\n").flush();
+                cm.addClientFile(addr, port, FileID);
+            } catch (IOException ex) {
+                Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }
 
     private void unshare(String FileID, String Hash) {
