@@ -1,5 +1,7 @@
+
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -68,7 +70,7 @@ class SeedThread extends ClientThread implements Runnable {
      */
     @Override
     public void run() {
-
+        
         /**
          * - Connect with Server via client.serverPI
          * - add File to client data via client.dataManager
@@ -78,32 +80,22 @@ class SeedThread extends ClientThread implements Runnable {
          * 
          */
         int fileID = 0;
-        if (client.dataManager.haveFile(fileName, fileSize, path))
-        {
-            //JOptionPane.showMessageDialog(null, this);
-            //JOptionPane.showMessageDialog(this.client, this, "Error", "This file had been seeded!");
-                //String str1 = JOptionPane.showInputDialog(null, "Enter file ID: ", "Server for downloading", 1);
-
-            return ;
-        }
-        client.dataManager.addFile(-1, fileName, fileSize, fileSize, "[unknown]", "SEEDING", path);
         this.fileHash = getMD5Hash(path);
-
+        
         try {
             fileID = client.serverPI.seed(URLEncoder.encode(fileName, "ISO-8859-1"), fileSize, fileHash);
         } catch (UnsupportedEncodingException ex) {
             Logger.getLogger(SeedThread.class.getName()).log(Level.SEVERE, null, ex);
         }
-
+        
         if (fileID == 0) {
             System.err.println("File " + path + "exists");
             return;
         }
-        
-        client.dataManager.addFile(fileID, fileName, fileSize, fileSize, fileHash, "SEEDED", path);
+            client.dataManager.addFile(fileID, fileName, fileSize, fileSize, fileHash, "SEEDING", path);
 
-        // TODO:
-
+            // TODO:
+      
     }
 
     public SeedThread(Client client, String path) {
@@ -134,6 +126,5 @@ class SeedThread extends ClientThread implements Runnable {
     @Override
     public String getClientAddr() {
         throw new UnsupportedOperationException("Not supported yet.");
-                        
     }
 }
