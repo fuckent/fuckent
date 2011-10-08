@@ -116,11 +116,11 @@ public class ServerPI implements Runnable {
                 //String Addrstring = Addr.toString();
                 //  int Port = (Integer)con.getPort();
                 String addr = con.getInetAddress().toString();
-                int port =  (Integer)(con.getPort());
+         int port =  (Integer)(con.getPort());
                // String Addr = con.getInetAddress()).toString();
 
                 new PrintWriter(con.getOutputStream()).format("OK\n").flush();
-                cm.addClientFile(addr, port, FileID);
+                if(!cm.haveSharedFile(addr, port, FileID))   cm.addClientFile(addr, port, FileID);
             } catch (IOException ex) {
                 Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
             }

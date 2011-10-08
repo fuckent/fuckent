@@ -65,7 +65,7 @@ public class Client {
             this.serverPI = new ServerPI(serverAddr, 5321);
             break;
         } catch (IOException ex) {
-            JOptionPane.showMessageDialog(null, "Can't connect to server " + serverAddr);
+            JOptionPane.showMessageDialog(null, "Can't connect to server " + serverAddr, "ERROR", 0);
         }
         }
         

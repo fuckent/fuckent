@@ -44,7 +44,7 @@ public class ClientManager {
         } catch (SQLException e) {
             // if the error message is "out of memory", 
             // it probably means no database file is found
-            // TODO: CODE HERE!!
+            // TODO: CODE HERE!! aaaaaaaa
 
             System.err.println(e.getMessage());
         }
@@ -54,7 +54,7 @@ public class ClientManager {
     }
     public synchronized Boolean haveSharedFile(String clientAddr, int port, int fileID) {
         try {
-            ResultSet rs = statement.executeQuery("select clientAddr, clientPort from clientManager where fileID = " + fileID +" clientAddr = " +clientAddr + " clientPort = " + port);
+            ResultSet rs = statement.executeQuery(String.format("select * from clientManager where fileID = %d and clientAddr = '%s' and clientPort = '%s'", fileID, clientAddr, port));
             return rs.next();
 
 

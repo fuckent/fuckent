@@ -29,6 +29,14 @@ public class DataManager {
         }
     }
 
+    public synchronized void updateStatus(int fileID, String status){
+        try {
+            statement.executeUpdate(String.format("update FileManager set status = '%s' where fileID = %d", status, fileID));
+        } catch (SQLException ex) {
+            Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
     public synchronized void removeFile(int fileID) {
         try {
             statement.executeUpdate("delete from FileManager where fileID = " + fileID);
