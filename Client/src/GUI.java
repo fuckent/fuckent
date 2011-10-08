@@ -40,25 +40,25 @@ public class GUI extends javax.swing.JFrame {
     }
 
     private int seedFile(String path) {
-        
-        Thread t = new Thread(new SeedThread(this.client, path));
-                System.out.println(t.getPriority());
 
-       // t.setDaemon(true);
-       t.start();
-        
-        
+        Thread t = new Thread(new SeedThread(this.client, path));
+        System.out.println(t.getPriority());
+
+        // t.setDaemon(true);
+        t.start();
+
+
         System.out.println("User wants to seed file: " + path);
 
         return 0;
     }
 
     private void shareFile() {
-        
-        int row =fileTable.getSelectedRow();
+
+        int row = fileTable.getSelectedRow();
         DefaultTableModel model = (DefaultTableModel) fileTable.getModel();
-        int ID = (Integer)model.getValueAt(row, 0);//);
-        String Hash = (String)model.getValueAt(row, 5);
+        int ID = (Integer) model.getValueAt(row, 0);//);
+        String Hash = (String) model.getValueAt(row, 5);
         System.out.println("User wants to share file: " + ID);
 
         client.serverPI.share(ID, Hash);
@@ -112,8 +112,11 @@ public class GUI extends javax.swing.JFrame {
                     rate = 0;
                 }
                 //   int rate = client.threadManager.getThread(fileID).getRate();
-
-                model.addRow(new Object[]{fileID, fileName, String.valueOf(rate) + "kB", String.valueOf(curSize) + "/" + String.valueOf(fileSize), clientAddr, hash, fileStatus});
+                if (fileStatus.equals("SEEDING")) {
+                    model.addRow(new Object[]{"*", fileName, String.valueOf(rate) + "kB", String.valueOf(curSize) + "/" + String.valueOf(fileSize), clientAddr, "[unknown]", "SEEDING"});
+                } else {
+                    model.addRow(new Object[]{fileID, fileName, String.valueOf(rate) + "kB", String.valueOf(curSize) + "/" + String.valueOf(fileSize), clientAddr, hash, fileStatus});
+                }
             }
             // Get the ListSelectionModel of the JTable
             ListSelectionModel model1 = fileTable.getSelectionModel();
@@ -131,7 +134,7 @@ public class GUI extends javax.swing.JFrame {
     GUI(Client aThis) {
 
 
-        
+
         initComponents();
 
         client = aThis;
@@ -166,7 +169,7 @@ public class GUI extends javax.swing.JFrame {
             }
         });
 
-        
+
 
     }
 
@@ -433,7 +436,6 @@ private void fileTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         // TODO add your handling code here:
         this.shareFile();
     }//GEN-LAST:event_jMenuItem13ActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable fileTable;
     private javax.swing.JPopupMenu function;

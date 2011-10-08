@@ -19,11 +19,27 @@ public class DataManager {
 
     private Statement statement;
     private Connection connection;
+    private int nCount = -1;
+
+    public synchronized Boolean haveFile(String fileName, long fileSize, String fileLocation){
+        try {
+            return statement.executeQuery(String.format("select * from FileManager where fileName = '%s' and fileSize = %d and fileLocation = '%s'", fileName, fileSize, fileLocation)).next();
+        } catch (SQLException ex) {
+            Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
 
     public synchronized void addFile(int fileID, String fileName, long fileSize, long curSize, String hash, String fileStatus, String fileLocation) {
         try {
-            
+            if (fileID < 0) {
+                nCount--;
+                statement.executeUpdate(String.format("insert into FileManager values (null, '%s', %d, %d, '%s', '%s', '%s')", fileName, fileSize, curSize, hash, fileStatus, fileLocation));
+
+            } else {
+                statement.executeUpdate(String.format("delete from FileManager where fileName = '%s' and fileSize = %d and curSize = %d and fileHash = '[unknown]' and status = 'SEEDING' and fileLocation = '%s'", fileName, fileSize, curSize, fileLocation));
                 statement.executeUpdate(String.format("insert into FileManager values (%d, '%s', %d, %d, '%s', '%s', '%s')", fileID, fileName, fileSize, curSize, hash, fileStatus, fileLocation));
+            }
         } catch (SQLException ex) {
             Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -49,10 +65,9 @@ public class DataManager {
         } catch (SQLException ex) {
             Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         return null;
     }
-
 
     public DataManager() {
         try {
