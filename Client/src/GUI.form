@@ -36,6 +36,14 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jMenuItem13ActionPerformed"/>
           </Events>
         </MenuItem>
+        <MenuItem class="javax.swing.JMenuItem" name="jMenuItem14">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Unshare file"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jMenuItem14ActionPerformed"/>
+          </Events>
+        </MenuItem>
         <MenuItem class="javax.swing.JMenuItem" name="jMenuItem10">
           <Properties>
             <Property name="text" type="java.lang.String" value="Download file"/>
@@ -155,12 +163,12 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="jScrollPane1" pref="652" max="32767" attributes="0"/>
+          <Component id="jScrollPane1" pref="657" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="jScrollPane1" pref="335" max="32767" attributes="0"/>
+          <Component id="jScrollPane1" pref="343" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>

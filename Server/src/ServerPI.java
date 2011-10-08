@@ -72,11 +72,11 @@ public class ServerPI implements Runnable {
 
     }
 
-    private void seed(String FileName, String Size, String Hash)  {
+    private void seed(String FileName, String Size, String Hash) {
 
         try {
 //
-                        System.out.println("SEED REQ");
+            System.out.println("SEED REQ");
             //long size = new .
             Long size = new Long(Size);
             //size.
@@ -103,24 +103,25 @@ public class ServerPI implements Runnable {
         System.out.println("SHAR REQ");
         Boolean check = sdm.haveFile(FileID, Hash);
         SocketAddress Addr;
-        if(!check){
+        if (!check) {
             try {
                 new PrintWriter(con.getOutputStream()).format("ERROR\n").flush();
             } catch (IOException ex) {
                 Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
             }
-        }
-        else{
+        } else {
             try {
                 //  Addr = con.getRemoteSocketAddress();
                 //String Addrstring = Addr.toString();
                 //  int Port = (Integer)con.getPort();
                 String addr = con.getInetAddress().toString();
-         int port =  (Integer)(con.getPort());
-               // String Addr = con.getInetAddress()).toString();
+                int port = (Integer) (con.getPort());
+                // String Addr = con.getInetAddress()).toString();
 
                 new PrintWriter(con.getOutputStream()).format("OK\n").flush();
-                if(!cm.haveSharedFile(addr, port, FileID))   cm.addClientFile(addr, port, FileID);
+                if (!cm.haveSharedFile(addr, port, FileID)) {
+                    cm.addClientFile(addr, port, FileID);
+                }
             } catch (IOException ex) {
                 Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -130,6 +131,26 @@ public class ServerPI implements Runnable {
     private void unshare(String FileID, String Hash) {
         // TODO process UNSHARE request
         System.out.println("UNSR REQ");
-
+        String addr= con.getInetAddress().toString();
+        int port = (Integer)(con.getPort());
+        Boolean check = cm.haveSharedFile(addr, port, new Integer(FileID).intValue());
+        if (!check)
+        {
+            try {
+                new PrintWriter(con.getOutputStream()).format("ERROR\n").flush();
+            } catch (IOException ex) {
+                Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } else
+        {
+            try {
+                System.out.println("OK");
+                new PrintWriter(con.getOutputStream()).format("OK\n").flush();
+            } catch (IOException ex) {
+                Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            cm.removeClientFile(addr, port,  new Integer(FileID).intValue());
+        }
     }
+
 }

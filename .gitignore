@@ -4,3 +4,5 @@
 /Client/.settings/
 /Client/build/
 /Server/build/
+/Server/dist/
+/Client/dist/
