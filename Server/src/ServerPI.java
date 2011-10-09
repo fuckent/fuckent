@@ -1,6 +1,9 @@
 
 import java.net.*;
 import java.io.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,7 +46,7 @@ public class ServerPI implements Runnable {
                         seed(lst[1], lst[2], lst[3]);
                     } else if (line.matches("DOWNLOAD [^ ]+")) {
                         String[] lst = line.split(" ");
-                        download(lst[1]);
+                        download(new Integer(lst[1]).intValue());
 
                     } else if (line.matches("SHARE [^ ]+ [^ ]+")) {
                         String[] lst = line.split(" ");
@@ -72,11 +75,11 @@ public class ServerPI implements Runnable {
 
     }
 
-    private void seed(String FileName, String Size, String Hash)  {
+    private void seed(String FileName, String Size, String Hash) {
 
         try {
 //
-                        System.out.println("SEED REQ");
+            System.out.println("SEED REQ");
             //long size = new .
             Long size = new Long(Size);
             //size.
@@ -92,10 +95,51 @@ public class ServerPI implements Runnable {
 
     }
 
-    private void download(String FileID) {
+    private void download(int FileID) {
         // TODO process DOWNLOAD request
+
         System.out.println("DOWN REQ");
 
+        if (!sdm.haveFile(FileID)) {
+            try {
+                new PrintWriter(con.getOutputStream()).format("DOWNLOAD ERROR 1\n").flush();
+                System.out.println("error1");
+            } catch (IOException ex) {
+                Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }else{
+            ResultSet inforOfFile = sdm.getInforOfFile(FileID);
+            // if(!cm.haveSharedFile(null, FileID, FileID))
+            Vector<String> listClient = cm.getListClient(FileID);
+            if (listClient.isEmpty()){
+                try {
+                    new PrintWriter(con.getOutputStream()).format("DOWNLOAD ERROR 2\n").flush();
+                    System.out.println("error2");
+                } catch (IOException ex) {
+                    Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }else{
+                try {
+                    String name = inforOfFile.getString("fileName");
+                    String size = inforOfFile.getString("fileSize");
+                    String hash = inforOfFile.getString("fileHash");
+                    String IPClient = listClient.elementAt(0);
+                    //System.out.println("error3");
+                    try {
+                        new PrintWriter(con.getOutputStream()).format("DOWNLOAD %s %s %s %s\n", java.net.URLEncoder.encode(name, "ISO-8859-1"), size, hash, IPClient).flush();
+                        System.out.println(java.net.URLEncoder.encode(name, "ISO-8859-1"));
+
+                    } catch (IOException ex) {
+                        Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                } catch (SQLException ex) {
+                    Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+                
+            }
+        }
+        System.out.println("---------------");
     }
 
     private void share(int FileID, String Hash) {
@@ -103,24 +147,26 @@ public class ServerPI implements Runnable {
         System.out.println("SHAR REQ");
         Boolean check = sdm.haveFile(FileID, Hash);
         SocketAddress Addr;
-        if(!check){
+        if (!check) {
             try {
                 new PrintWriter(con.getOutputStream()).format("ERROR\n").flush();
             } catch (IOException ex) {
                 Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
             }
-        }
-        else{
+        } else {
             try {
                 //  Addr = con.getRemoteSocketAddress();
                 //String Addrstring = Addr.toString();
                 //  int Port = (Integer)con.getPort();
                 String addr = con.getInetAddress().toString();
-         int port =  (Integer)(con.getPort());
-               // String Addr = con.getInetAddress()).toString();
+                addr = addr.substring(1);
+                int port = (Integer) (con.getPort());
+                // String Addr = con.getInetAddress()).toString();
 
                 new PrintWriter(con.getOutputStream()).format("OK\n").flush();
-                if(!cm.haveSharedFile(addr, port, FileID))   cm.addClientFile(addr, port, FileID);
+                if (!cm.haveSharedFile(addr, port, FileID)) {
+                    cm.addClientFile(addr, port, FileID);
+                }
             } catch (IOException ex) {
                 Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -130,6 +176,26 @@ public class ServerPI implements Runnable {
     private void unshare(String FileID, String Hash) {
         // TODO process UNSHARE request
         System.out.println("UNSR REQ");
-
+        String addr= con.getInetAddress().toString();
+        int port = (Integer)(con.getPort());
+        Boolean check = cm.haveSharedFile(addr, port, new Integer(FileID).intValue());
+        if (!check)
+        {
+            try {
+                new PrintWriter(con.getOutputStream()).format("ERROR\n").flush();
+            } catch (IOException ex) {
+                Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } else
+        {
+            try {
+                System.out.println("OK");
+                new PrintWriter(con.getOutputStream()).format("OK\n").flush();
+            } catch (IOException ex) {
+                Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            cm.removeClientFile(addr, port,  new Integer(FileID).intValue());
+        }
     }
+
 }

@@ -35,6 +35,16 @@ public class ServerDataManager {
         return 0;
     }
 
+    public synchronized ResultSet getInforOfFile(int fileID) {
+        try {
+            return statement.executeQuery(String.format("select * from FileManager where fileID = %d", fileID));
+        } catch (SQLException ex) {
+            Logger.getLogger(ServerDataManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return null;
+    }
+
     public synchronized Boolean haveFile(int FileID, String Hash) {
         try {
             // TODO: CODE HERE!!!
@@ -47,6 +57,21 @@ public class ServerDataManager {
         }
         return false;
     }
+
+
+    public synchronized Boolean haveFile(int FileID) {
+        try {
+            // TODO: CODE HERE!!!
+            // check if database have a file by FileID
+            String sql = String.format("select * from FileManager where fileID = %d", FileID);
+            ResultSet rs = statement.executeQuery(sql);
+            return rs.next();
+        } catch (SQLException ex) {
+            Logger.getLogger(ServerDataManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
+
 
     public ServerDataManager() {
         try {
@@ -95,6 +120,7 @@ public class ServerDataManager {
         //do finalization here
         super.finalize(); //not necessary if extending Object.
     }
+
 
 
 }

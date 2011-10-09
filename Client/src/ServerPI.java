@@ -22,8 +22,28 @@ public class ServerPI {
     PrintWriter out;
     private Socket con;
 
-    public synchronized String download(int fileID, String hash) {
+    public synchronized String download(int fileID) {
+
         // TODO: CODE HERE!!!
+       // String[] lst;
+        //int ID;
+        //String name;
+        //String hash;
+        //String IP;
+        try {
+            System.out.println("send Dow REQ");
+            out.format("DOWNLOAD %s\n", fileID).flush();
+
+            String str = reader.readLine();
+            System.out.println("return func download!");
+            return str;
+
+
+
+        } catch (IOException ex) {
+            Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
         return null;
 
     }
@@ -46,9 +66,22 @@ public class ServerPI {
         return false;
     }
 
-    public synchronized void unshare(int fileID) {
-        // TODO: CODE HRE
-        // tell server we want unshare a file!!!
+    public synchronized Boolean unshare(int fileID,String hash) {
+        try {
+            // TODO: CODE HRE
+            // tell server we want unshare a file!!!
+            out.format("UNSHARE %d %s\n", fileID, hash).flush();
+            String str = reader.readLine();
+            if (str.matches("OK")) {
+                return true;
+            }
+            if (str.matches("ERROR")) {
+                return false;
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
     }
 
     public synchronized int seed(String fileName, long fileSize, String hash) {
