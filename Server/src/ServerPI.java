@@ -1,6 +1,11 @@
 
 import java.net.*;
 import java.io.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -10,7 +15,7 @@ public class ServerPI implements Runnable {
     /* Use  variables below to interactive with the Database */
     private ClientManager cm;
     private ServerDataManager sdm;
-//cm.
+
     public ServerPI(Socket con, ClientManager cm, ServerDataManager sdm) {
         this.cm = cm;
         this.sdm = sdm;
@@ -75,11 +80,10 @@ public class ServerPI implements Runnable {
     private void seed(String FileName, String Size, String Hash) {
 
         try {
-//
+
             System.out.println("SEED REQ");
-            //long size = new .
             Long size = new Long(Size);
-            //size.
+
             int fileID = sdm.addFile(java.net.URLDecoder.decode(FileName, "ISO-8859-1"), size.longValue(), Hash);
             try {
                 new PrintWriter(con.getOutputStream()).format("SEED %d\n", fileID).flush();
@@ -91,10 +95,62 @@ public class ServerPI implements Runnable {
         }
 
     }
+    
+     String join(Collection<?> s, String delimiter) {
+     StringBuilder builder = new StringBuilder();
+     Iterator iter = s.iterator();
+     while (iter.hasNext()) {
+         builder.append(iter.next());
+         if (!iter.hasNext()) {
+           break;                  
+         }
+         builder.append(delimiter);
+     }
+     return builder.toString();
+ }
+
 
     private void download(String FileID) {
-        // TODO process DOWNLOAD request
+
         System.out.println("DOWN REQ");
+
+        if (!sdm.haveFile(new Integer(FileID).intValue(), null)) {
+            try {
+                new PrintWriter(con.getOutputStream()).format("DOWNLOAD ERROR 1\n").flush();
+                // System.out.println("error1");
+            } catch (IOException ex) {
+                Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } else {
+            ResultSet inforOfFile = sdm.getInfoOfFile(new Integer(FileID).intValue());
+
+            Vector<String> listClient = cm.getListClient(new Integer(FileID).intValue());
+            String listAddr = this.join(listClient, " ");
+            if (listClient.isEmpty()) {
+                try {
+                    new PrintWriter(con.getOutputStream()).format("DOWNLOAD ERROR 2\n").flush();
+                } catch (IOException ex) {
+                    Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            } else {
+                try {
+                    String name = inforOfFile.getString("fileName");
+                    String size = inforOfFile.getString("fileSize");
+                    String hash = inforOfFile.getString("fileHash");
+
+                    try {
+                        new PrintWriter(con.getOutputStream()).format("DOWNLOAD %s %s %s %s\n", java.net.URLEncoder.encode(name, "ISO-8859-1"), size, hash, listAddr).flush();
+
+                    } catch (IOException ex) {
+                        Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                } catch (SQLException ex) {
+                    Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+
+            }
+        }
 
     }
 
@@ -131,26 +187,23 @@ public class ServerPI implements Runnable {
     private void unshare(String FileID, String Hash) {
         // TODO process UNSHARE request
         System.out.println("UNSR REQ");
-        String addr= con.getInetAddress().toString();
-        int port = (Integer)(con.getPort());
+        String addr = con.getInetAddress().toString();
+        int port = (Integer) (con.getPort());
         Boolean check = cm.haveSharedFile(addr, port, new Integer(FileID).intValue());
-        if (!check)
-        {
+        if (!check) {
             try {
                 new PrintWriter(con.getOutputStream()).format("ERROR\n").flush();
             } catch (IOException ex) {
                 Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
             }
-        } else
-        {
+        } else {
             try {
                 System.out.println("OK");
                 new PrintWriter(con.getOutputStream()).format("OK\n").flush();
             } catch (IOException ex) {
                 Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
             }
-            cm.removeClientFile(addr, port,  new Integer(FileID).intValue());
+            cm.removeClientFile(addr, port, new Integer(FileID).intValue());
         }
     }
-
 }

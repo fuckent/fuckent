@@ -37,6 +37,10 @@ public class GUI extends javax.swing.JFrame {
     private void downloadFile(int fileID) {
 
         System.out.println("User wants to download file: " + fileID);
+        System.out.println("Started download thread");
+
+        Thread t = new Thread(new DownloadThread(fileID, 0, this.client));
+        t.start();
 
 
         /*    TODO: MORE HERE! */
@@ -45,9 +49,6 @@ public class GUI extends javax.swing.JFrame {
         /* ------------------- */
         //System.out.
         //client.dataManager.
-        System.out.println("Started download thread");
-        Thread t = new Thread(new DownloadThread("127.0.0.1", 1, "43fd055ada51dce25baec42b2312fa4c", 0, this.client));
-        t.start();
         //client.serverPI.download(fileID, "okie");
     }
 
@@ -315,7 +316,6 @@ public class GUI extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Torrent - D");
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-        setResizable(false);
 
         fileTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -459,8 +459,9 @@ private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
 private void jMenuItem4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem4ActionPerformed
 // TODO add your handling code here:
 
-    String str1 = JOptionPane.showInputDialog(null, "Enter file ID: ", "Server for downloading", 1);
-    this.downloadFile(new Integer(str1).intValue());
+    String str = JOptionPane.showInputDialog(null, "Enter file ID: ", "Server for downloading", 1);
+    
+    this.downloadFile(new Integer(str).intValue());
 
 }//GEN-LAST:event_jMenuItem4ActionPerformed
 
