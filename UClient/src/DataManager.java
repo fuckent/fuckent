@@ -43,6 +43,15 @@ public class DataManager {
         return false;
     }
 
+    public synchronized Boolean haveFile(int fileID){
+        try {
+            return statement.executeQuery(String.format("select * from FileManager where fileID = %d", fileID)).next();
+        } catch (SQLException ex) {
+            Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
+
     public synchronized void addFile(int fileID, String fileName, long fileSize, long curSize, String hash, String fileStatus, String fileLocation) {
         try {
             if (fileID < 0) {
@@ -130,4 +139,5 @@ public class DataManager {
         //do finalization here
         super.finalize(); //not necessary if extending Object.
     }
+
 }
