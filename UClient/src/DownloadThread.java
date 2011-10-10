@@ -1,21 +1,21 @@
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.sql.SQLException;
+import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 
 /*
  * To change this template, choose Tools | Templates
@@ -27,15 +27,15 @@ import java.util.logging.Logger;
  */
 class DownloadThread extends ClientThread implements Runnable {
 
-    private final Client client;
-    private final int fileID;
-    private final String server;
+    private Client client;
+    private int fileID;
+    private String server;
     private Socket conn;
     private InputStreamReader in;
     private BufferedReader reader;
     private PrintWriter out;
-    private final String fileHash;
-    private final long pos;
+    private String fileHash;
+    private long pos;
     private File File;
     private RandomAccessFile oS;
     private InputStream inStream;
@@ -43,6 +43,8 @@ class DownloadThread extends ClientThread implements Runnable {
     long totalCount;
     private long fileSize;
     private ConcurrentLinkedQueue<String> msgQueue;
+    private String fileName;
+    private String clientAddr;
 
     @Override
     public void sendMsg(String str) {
@@ -67,7 +69,45 @@ class DownloadThread extends ClientThread implements Runnable {
 
     @Override
     public void run() {
-        File = new File(fileHash);
+        String line = client.serverPI.download(fileID);
+
+        if (line.matches("DOWNLOAD [^ ]+ [0-9]+ [0-9a-z]+( [^ ]+)+")) {
+
+            String[] lst = line.split(" ");
+
+            try {
+                this.fileName = java.net.URLDecoder.decode(lst[1], "ISO-8859-1");
+            } catch (UnsupportedEncodingException ex) {
+                Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+                fileName = "[unknown]";
+            }
+            this.fileSize = new Long(lst[2]).longValue();
+            this.fileHash = lst[3];
+            this.clientAddr = lst[4 + (new Random()).nextInt(lst.length - 4)];
+            try {
+                if (client.dataManager.getFile(String.valueOf(fileID), fileHash).next()) {
+                    JOptionPane.showMessageDialog(null, "This file had already existed on your PC", "ERROR", 0);
+                    return;
+                }
+            } catch (SQLException ex) {
+                Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+                JOptionPane.showMessageDialog(null, "This file had already existed on your PC", "ERROR", 0);
+                return;
+            }
+
+            client.dataManager.addFile(fileID, fileName, fileSize, 0, fileHash, "DOWNLOADING", "./");
+
+        } else if (line.matches("DOWNLOAD ERROR 1")) {
+            JOptionPane.showMessageDialog(null, "The file don't exists on server", "ERROR", 0);
+            return;
+        } else if (line.matches("DOWNLOAD ERROR 2")) {
+            JOptionPane.showMessageDialog(null, "Nobody is sharing the file", "ERROR", 0);
+            return;
+        }
+
+
+        File = new File(fileName);
+
         try {
             oS = new RandomAccessFile(File, "rw");
         } catch (FileNotFoundException ex) {
@@ -76,6 +116,7 @@ class DownloadThread extends ClientThread implements Runnable {
 
         System.out.println("Thread download start!");
         String[] lst;
+        line = null;
 
         try {
             this.conn = new Socket(server, 1235);
@@ -89,7 +130,7 @@ class DownloadThread extends ClientThread implements Runnable {
             System.out.println("Connect to other client");
             out.format("DOWNLOAD %d %s %d\n", this.fileID, this.fileHash, this.pos).flush();
 
-            String line = reader.readLine();
+            line = reader.readLine();
             System.out.println("res: " + line);
             if (line.matches("OK [0-9]+")) {
                 lst = line.split(" ");
@@ -137,15 +178,13 @@ class DownloadThread extends ClientThread implements Runnable {
         }
     }
 
-    public DownloadThread(String serverIP, int fileID, String fileHash, long pos, Client aThis) {
-        this.server = serverIP;
-        this.fileID = fileID;
+    public DownloadThread(int fileID, int pos, Client aThis) {
         this.client = aThis;
-        this.fileHash = fileHash;
         totalCount = 0;
         this.pos = pos;
+        this.fileID = fileID;
         msgQueue = new ConcurrentLinkedQueue<String>();
-        client.threadManager.addThread(this.fileID, this);
+        this.client.threadManager.addThread(this.fileID, this);
     }
 
     @Override
@@ -167,6 +206,6 @@ class DownloadThread extends ClientThread implements Runnable {
     @Override
     public String getClientAddr() {
         //throw new UnsupportedOperationException("Not supported yet.");
-        return "[unknown]";
+        return this.clientAddr;
     }
 }

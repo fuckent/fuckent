@@ -23,29 +23,19 @@ public class ServerPI {
     private Socket con;
 
     public synchronized String download(int fileID) {
-
-        // TODO: CODE HERE!!!
-       // String[] lst;
-        //int ID;
-        //String name;
-        //String hash;
-        //String IP;
         try {
-            System.out.println("send Dow REQ");
-            out.format("DOWNLOAD %s\n", fileID).flush();
+            System.out.println("Download REQ file: " + fileID);
+            out.format("DOWNLOAD %d\n", fileID).flush();
 
             String str = reader.readLine();
-            System.out.println("return func download!");
+            System.out.println("line: " + str);
+
             return str;
-
-
-
         } catch (IOException ex) {
             Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return null;
-
     }
 
     public synchronized Boolean share(int fileID, String hash) {
@@ -56,17 +46,17 @@ public class ServerPI {
             String str = reader.readLine();
             if (str.matches("OK")) {
                 return true;
-                }
+            }
             if (str.matches("ERROR")) {
                 return false;
-                }
+            }
         } catch (IOException ex) {
             Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
         }
         return false;
     }
 
-    public synchronized Boolean unshare(int fileID,String hash) {
+    public synchronized Boolean unshare(int fileID, String hash) {
         try {
             // TODO: CODE HRE
             // tell server we want unshare a file!!!
@@ -86,7 +76,7 @@ public class ServerPI {
 
     public synchronized int seed(String fileName, long fileSize, String hash) {
         String[] lst;
-        
+
         try {
             out.format("SEED %s %d %s\n", fileName, fileSize, hash).flush();
 
@@ -94,10 +84,10 @@ public class ServerPI {
             if (str.matches("SEED [^ ]+")) {
                 lst = str.split(" ");
                 return new Integer(lst[1]).intValue();
-                }
+            }
         } catch (IOException ex) {
             Logger.getLogger(ServerPI.class.getName()).log(Level.SEVERE, null, ex);
-        } 
+        }
         return 0;
     }
 

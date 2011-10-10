@@ -21,31 +21,22 @@ public class DataManager {
     private Connection connection;
     private int nCount = -1;
     private ResultSet rs;
-    
+
     public synchronized ResultSet getFile(String fileID, String fileHash) {
         try {
-            return statement.executeQuery(String.format("select * from FileManager where fileID = %s and fileHash = '%s'", fileID, fileHash));
-            //return rs.getString("fileLocation");
+            ResultSet srs = statement.executeQuery(String.format("select * from FileManager where fileID = %s and fileHash = '%s'", fileID, fileHash));
+            return srs;
         } catch (SQLException ex) {
             Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         return null;
-        
+
     }
 
-    public synchronized Boolean haveFile(String fileName, long fileSize, String fileLocation){
+    public synchronized Boolean haveFile(String fileName, long fileSize, String fileLocation) {
         try {
             return statement.executeQuery(String.format("select * from FileManager where fileName = '%s' and fileSize = %d and fileLocation = '%s'", fileName, fileSize, fileLocation)).next();
-        } catch (SQLException ex) {
-            Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return false;
-    }
-
-    public synchronized Boolean haveFile(int fileID){
-        try {
-            return statement.executeQuery(String.format("select * from FileManager where fileID = %d", fileID)).next();
         } catch (SQLException ex) {
             Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -66,8 +57,8 @@ public class DataManager {
             Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
-    public synchronized void updateStatus(int fileID, String status){
+
+    public synchronized void updateStatus(int fileID, String status) {
         try {
             statement.executeUpdate(String.format("update FileManager set status = '%s' where fileID = %d", status, fileID));
         } catch (SQLException ex) {
@@ -95,10 +86,9 @@ public class DataManager {
         } catch (SQLException ex) {
             Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         return null;
     }
-
 
     public DataManager() {
         try {
@@ -139,5 +129,4 @@ public class DataManager {
         //do finalization here
         super.finalize(); //not necessary if extending Object.
     }
-
 }

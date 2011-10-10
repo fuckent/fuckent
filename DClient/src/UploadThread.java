@@ -120,6 +120,8 @@ class UploadThread extends ClientThread implements Runnable {
                         byte[] buf = new byte[4096];
                         int i = 0;
                         while (totalCount < fileSize) {
+                            this.recvMsg();
+                            
                             count = iS.read(buf);
                             totalCount += count;
                             conn.getOutputStream().write(buf, 0, count);

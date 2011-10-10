@@ -6,3 +6,8 @@
 /Server/build/
 /Server/dist/
 /Client/dist/
+/DClient/nbproject/private/
+/UClient/nbproject/private/
+/DClient/build/
+/DClient/dist/
+/UClient/build/
