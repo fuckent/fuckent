@@ -90,7 +90,7 @@ public class ClientManager {
 
     public synchronized void removeClient(String clientAddr, int port) {
         try {
-            statement.executeUpdate("delete from clientManager where clientAdrr = '" + clientAddr + "' and clientPort = " + port);
+            statement.executeUpdate("delete from clientManager where clientAddr = '" + clientAddr + "' and clientPort = " + port);
         } catch (SQLException e) {
             // if the error message is "out of memory", 
             // it probably means no database file is found
@@ -127,7 +127,7 @@ public class ClientManager {
         connection = null;
         try {
             // create a database connection
-            connection = DriverManager.getConnection("jdbc:sqlite:cdata.db");
+            connection = DriverManager.getConnection("jdbc:sqlite::memory:");
             statement = connection.createStatement();
             statement.setQueryTimeout(30);  // set timeout to 30 sec.
 

@@ -15,11 +15,15 @@ public class ServerPI implements Runnable {
     /* Use  variables below to interactive with the Database */
     private ClientManager cm;
     private ServerDataManager sdm;
+    private final String addr;
+    private final Integer port;
 
     public ServerPI(Socket con, ClientManager cm, ServerDataManager sdm) {
         this.cm = cm;
         this.sdm = sdm;
         this.con = con;
+        this.addr = con.getInetAddress().toString().substring(1);
+        this.port = (Integer) (con.getPort());
     }
 
     @Override
@@ -68,6 +72,7 @@ public class ServerPI implements Runnable {
             }
             /* Close connection */
             System.out.println("Connection closed!");
+            cm.removeClient(addr, port);
             con.close();
 
         } catch (IOException e) {
@@ -95,20 +100,19 @@ public class ServerPI implements Runnable {
         }
 
     }
-    
-     String join(Collection<?> s, String delimiter) {
-     StringBuilder builder = new StringBuilder();
-     Iterator iter = s.iterator();
-     while (iter.hasNext()) {
-         builder.append(iter.next());
-         if (!iter.hasNext()) {
-           break;                  
-         }
-         builder.append(delimiter);
-     }
-     return builder.toString();
- }
 
+    String join(Collection<?> s, String delimiter) {
+        StringBuilder builder = new StringBuilder();
+        Iterator iter = s.iterator();
+        while (iter.hasNext()) {
+            builder.append(iter.next());
+            if (!iter.hasNext()) {
+                break;
+            }
+            builder.append(delimiter);
+        }
+        return builder.toString();
+    }
 
     private void download(String FileID) {
 
@@ -158,7 +162,7 @@ public class ServerPI implements Runnable {
         // TODO process SHARE request
         System.out.println("SHAR REQ");
         Boolean check = sdm.haveFile(FileID, Hash);
-        SocketAddress Addr;
+        //SocketAddress Addr;
         if (!check) {
             try {
                 new PrintWriter(con.getOutputStream()).format("ERROR\n").flush();
@@ -167,12 +171,6 @@ public class ServerPI implements Runnable {
             }
         } else {
             try {
-                //  Addr = con.getRemoteSocketAddress();
-                //String Addrstring = Addr.toString();
-                //  int Port = (Integer)con.getPort();
-                String addr = con.getInetAddress().toString();
-                int port = (Integer) (con.getPort());
-                // String Addr = con.getInetAddress()).toString();
 
                 new PrintWriter(con.getOutputStream()).format("OK\n").flush();
                 if (!cm.haveSharedFile(addr, port, FileID)) {
@@ -187,8 +185,9 @@ public class ServerPI implements Runnable {
     private void unshare(String FileID, String Hash) {
         // TODO process UNSHARE request
         System.out.println("UNSR REQ");
-        String addr = con.getInetAddress().toString();
-        int port = (Integer) (con.getPort());
+        //String addr = con.getInetAddress().toString();
+        
+        //int port = (Integer) (con.getPort());
         Boolean check = cm.haveSharedFile(addr, port, new Integer(FileID).intValue());
         if (!check) {
             try {

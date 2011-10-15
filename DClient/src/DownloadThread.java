@@ -25,7 +25,7 @@ import javax.swing.JOptionPane;
  *
  * @author thong
  */
-class DownloadThread extends ClientThread implements Runnable {
+class DownloadThread extends ClientThread {
 
     private Client client;
     private int fileID;
@@ -45,6 +45,8 @@ class DownloadThread extends ClientThread implements Runnable {
     private ConcurrentLinkedQueue<String> msgQueue;
     private String fileName;
     private String clientAddr;
+    private Long curSize;
+    private int id;
 
     @Override
     public void sendMsg(String str) {
@@ -58,7 +60,15 @@ class DownloadThread extends ClientThread implements Runnable {
         }
         String msg = msgQueue.poll();
         if (msg.compareTo("CLOSE @CODE: [fuckent]") == 0) {
-            this.closeThread();
+            try {
+                this.conn.close();
+            } catch (IOException ex) {
+                Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            System.out.println("Closing thread");
+            closeThread();
+            Thread.currentThread().stop();
+
 
         }
         /* More here! */
@@ -67,8 +77,7 @@ class DownloadThread extends ClientThread implements Runnable {
 
     }
 
-    @Override
-    public void run() {
+    public void Run() {
         String line = client.serverPI.download(fileID);
 
         if (line.matches("DOWNLOAD [^ ]+ [0-9]+ [0-9a-z]+( [^ ]+)+")) {
@@ -85,9 +94,25 @@ class DownloadThread extends ClientThread implements Runnable {
             this.fileHash = lst[3];
             this.clientAddr = lst[4 + (new Random()).nextInt(lst.length - 4)];
             try {
-                if (client.dataManager.getFile(String.valueOf(fileID), fileHash).next()) {
-                    JOptionPane.showMessageDialog(null, "This file had already existed on your PC", "ERROR", 0);
-                    return;
+                if (!client.dataManager.getFile(String.valueOf(fileID), fileHash).next()) {
+                    client.dataManager.addFile(fileID, fileName, fileSize, 0, fileHash, "DOWNLOADING", "./" + fileName);
+                    this.id = client.gui.model.getRowCount();
+                    this.client.gui.model.addFile(new Files(fileID, this.fileName, 0 + " kB", 0, clientAddr, fileHash, "DOWNLOADING"), this);
+
+                } else {
+                    if (client.dataManager.getStatus(fileID).compareTo("DOWNLOADING") == 0)
+                        return ;
+                    int i = 0;
+                    while (i < client.gui.model.getRowCount()) {
+                        if ((Integer) client.gui.model.getValueAt(i, 0) == fileID) {
+                            break;
+                        }
+                        i++;
+                    }
+                    //this.id = id;
+                    client.gui.model.setValueAt("DOWNLOADING", i, 6);
+                    client.dataManager.updateStatus(fileID, "DOWNLOADING");
+                    client.gui.model.setSwingWorker(i, this);
                 }
             } catch (SQLException ex) {
                 Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
@@ -95,13 +120,12 @@ class DownloadThread extends ClientThread implements Runnable {
                 return;
             }
 
-            client.dataManager.addFile(fileID, fileName, fileSize, 0, fileHash, "DOWNLOADING", "./");
 
         } else if (line.matches("DOWNLOAD ERROR 1")) {
-            JOptionPane.showMessageDialog(null, "The file don't exists on server", "ERROR", 0);
+            JOptionPane.showMessageDialog(null, "This file doesn't exists on server", "Error", 0);
             return;
         } else if (line.matches("DOWNLOAD ERROR 2")) {
-            JOptionPane.showMessageDialog(null, "Nobody is sharing the file", "ERROR", 0);
+            JOptionPane.showMessageDialog(null, "Nobody is sharing this file", "Error", 0);
             return;
         }
 
@@ -110,6 +134,7 @@ class DownloadThread extends ClientThread implements Runnable {
 
         try {
             oS = new RandomAccessFile(File, "rw");
+
         } catch (FileNotFoundException ex) {
             Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -119,7 +144,8 @@ class DownloadThread extends ClientThread implements Runnable {
         line = null;
 
         try {
-            this.conn = new Socket(server, 1235);
+            this.conn = new Socket(clientAddr, 1235);
+            conn.setSoTimeout(10000);
 
             this.in = new InputStreamReader(conn.getInputStream());
             //this.BIS = new BufferedInputStream(conn.getInputStream());
@@ -141,18 +167,29 @@ class DownloadThread extends ClientThread implements Runnable {
                 int i = 0;
                 while (totalCount < fileSize) {
                     this.recvMsg();
-                    if (conn.getInputStream().available() > 0) {
-                        count = conn.getInputStream().read(buff);
-                        totalCount += count;
+                    // Thread.yield();
 
-                        if (count < 0) {
-                            System.err.println("DOWNLOAD ERROR!");
-                            this.closeThread();
-                        }
-                        oS.write(buff, 0, count);
+                    //if (conn.getInputStream().available() > 0) {
+                    count = conn.getInputStream().read(buff);
+
+                    if (count < 0) {
+                        System.err.println("DOWNLOAD ERROR!");
+                        this.closeThread();
+                        return;
                     }
+                    oS.write(buff, 0, count);
+                    totalCount += count;
+                    // newString.valueOf(totalCount *100/ fileSize)
+                    publish(Long.valueOf(totalCount * 100 / fileSize).intValue());
+                    // client.dataManager.updateCurrentSize(fileID, totalCount);
+                    //}
                 }
                 System.out.println("Finish download file");
+                closeThread();
+                client.dataManager.updateStatus(fileID, "COMPLETED");
+
+                return;
+                //client.threadManager.removeThread(fileID);
 
             } else {
                 System.err.println("DOWNLOAD ERROR!");
@@ -161,7 +198,8 @@ class DownloadThread extends ClientThread implements Runnable {
         } catch (UnknownHostException ex) {
             Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            Logger.getLogger(UploadThread.class.getName()).log(Level.SEVERE, null, ex);
+            //Logger.getLogger(UploadThread.class.getName()).log(Level.SEVERE, null, ex);
+            closeThread();
         } finally {
             if (conn != null) {
                 try {
@@ -178,23 +216,39 @@ class DownloadThread extends ClientThread implements Runnable {
         }
     }
 
-    public DownloadThread(int fileID, int pos, Client aThis) {
+    public DownloadThread(int fileID, long pos, Client aThis) {
         this.client = aThis;
-        totalCount = 0;
+        //totalCount = 0;
         this.pos = pos;
+        totalCount = pos;
         this.fileID = fileID;
         msgQueue = new ConcurrentLinkedQueue<String>();
-        this.client.threadManager.addThread(this.fileID, this);
+        //  this.client.threadManager.addThread(this.fileID, this);
     }
 
-    @Override
     public void setRate(int speed) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
     public void closeThread() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        int i = 0;
+        while (i < client.gui.model.getRowCount()) {
+            if ((Integer) client.gui.model.getValueAt(i, 0) == fileID) {
+                break;
+            }
+            i++;
+        }
+        client.dataManager.updateCurrentSize(fileID, totalCount);
+        client.dataManager.updateStatus(fileID, "PAUSED");
+        client.gui.model.setValueAt("PAUSED", i, 6);
+        System.out.println("Closed thread");
+        //client.threadManager.removeThread(this.id);
+    }
+
+    @Override
+    public Long getcurSize() {
+        return this.totalCount;
     }
 
     @Override
@@ -207,5 +261,23 @@ class DownloadThread extends ClientThread implements Runnable {
     public String getClientAddr() {
         //throw new UnsupportedOperationException("Not supported yet.");
         return this.clientAddr;
+    }
+
+    @Override
+    protected void process(java.util.List<Integer> c) {
+        int i = 0;
+
+        while (i < client.gui.model.getRowCount()) {
+            int k = (Integer) client.gui.model.getValueAt(i, 0);
+            if (k == this.fileID) {
+                client.gui.model.setValueAt(c.get(c.size() - 1), i, 3);
+            }
+            i++;
+        }
+    }
+
+    protected Integer doInBackground() throws Exception {
+        this.Run();
+        return 0;
     }
 }

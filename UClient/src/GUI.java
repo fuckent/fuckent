@@ -8,6 +8,8 @@
  *
  * Created on Sep 20, 2011, 8:50:09 PM
  */
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -16,6 +18,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
@@ -23,6 +26,8 @@ import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
 /**
@@ -31,16 +36,20 @@ import javax.swing.table.TableModel;
  */
 public class GUI extends javax.swing.JFrame {
 
+    private static final Color evenColor = new Color(230, 230, 230);
     Client client;
+    public final GUI gui;
+    public final FileTableModel model = new FileTableModel();
 
     // TODO: CODE FROM HERE!!!
-    private void downloadFile(int fileID) {
+    private void downloadFile(int fileID, long pos) {
 
         System.out.println("User wants to download file: " + fileID);
         System.out.println("Started download thread");
 
-        Thread t = new Thread(new DownloadThread(fileID, 0, this.client));
+        Thread t = new Thread(new DownloadThread(fileID, pos, this.client));
         t.start();
+        drawTable();
 
 
         /*    TODO: MORE HERE! */
@@ -54,15 +63,15 @@ public class GUI extends javax.swing.JFrame {
 
     private int seedFile(String path) {
 
-        Thread t = new Thread(new SeedThread(this.client, path));
-        System.out.println(t.getPriority());
+        new Thread(new SeedThread(this.client, path)).start();
+        //System.out.println(t.getPriority());
 
         // t.setDaemon(true);
-        t.start();
+        // t.start();
 
 
         System.out.println("User wants to seed file: " + path);
-
+        drawTable();
         return 0;
     }
 
@@ -103,9 +112,21 @@ public class GUI extends javax.swing.JFrame {
     }
 
     private void closeThread(int fileID) {
-        System.out.print("User wants to close thread processing file: " + fileID);
+        System.out.println("User wants to close thread processing file: " + fileID);
         client.threadManager.getThread(fileID).sendMsg("CLOSE @CODE: [fuckent]");
-        client.threadManager.removeThread(fileID);
+        // client.threadManager.removeThread(fileID);
+    }
+
+    private void resumeThread(int fileID) {
+
+        if (client.dataManager.getStatus(fileID).compareTo("PAUSED") != 0) {
+            return;
+        }
+
+        long currentSize = client.dataManager.getcurSize(fileID);
+
+        downloadFile(fileID, currentSize);
+
     }
 
     private void limitRate(int fileID, int rate) {
@@ -120,25 +141,34 @@ public class GUI extends javax.swing.JFrame {
     public void drawTable() {
         int fileID;
         String fileName;
-        int fileSize;
-        int curSize;
+        long fileSize;
+        long curSize;
         String fileStatus;
         String clientAddr;
         String hash;
         int rate;
         ClientThread a;
         int slr = fileTable.getSelectedRow();
+        int i;
+        //System.out.println("Draw");
         try {
-            DefaultTableModel model = (DefaultTableModel) fileTable.getModel();
+            FileTableModel model = (FileTableModel) fileTable.getModel();
             model.setRowCount(0);
-            ResultSet rs = client.dataManager.getFileList();
-            while (rs.next()) {
-                fileID = rs.getInt("fileID");
-                fileName = rs.getString("fileName");
-                fileSize = rs.getInt("fileSize");
-                hash = rs.getString("fileHash");
-                curSize = rs.getInt("curSize");
-                fileStatus = rs.getString("status");
+            Vector<Integer> v = client.dataManager.getAllFile();
+            for (i = 0; i < v.size(); i++) {
+                fileID = v.get(i);
+                fileName = client.dataManager.getfileName(fileID);
+                fileSize = client.dataManager.getfileSize(fileID);
+                hash = client.dataManager.getfileHash(fileID);
+
+                if (client.threadManager.getThread(fileID) != null) {
+                    curSize = client.threadManager.getThread(fileID).getcurSize();
+                    //client.dataManager.updateCurrentSize(fileID, curSize);
+                } else {
+                    curSize = client.dataManager.getcurSize(fileID);
+                }
+                //client.dataManager.getcurSize(fileID);
+                fileStatus = client.dataManager.getStatus(fileID);
                 a = client.threadManager.getThread(fileID);
                 if (a != null) {
                     clientAddr = a.getClientAddr();
@@ -148,10 +178,14 @@ public class GUI extends javax.swing.JFrame {
                     rate = 0;
                 }
                 //   int rate = client.threadManager.getThread(fileID).getRate();
+                 Integer done;
+                if (fileStatus.matches("DOWNLOADING|UPLOADING"))
+               done = Long.valueOf(curSize * 100 / fileSize).intValue();
+                else done = 0;
                 if (fileStatus.equals("SEEDING")) {
-                    model.addRow(new Object[]{"*", fileName, String.valueOf(rate) + "kB", String.valueOf(curSize) + "/" + String.valueOf(fileSize), clientAddr, "[unknown]", "SEEDING"});
+                    model.addRow(new Object[]{"*", fileName, String.valueOf(rate) + "kB", done, clientAddr, "[unknown]", "SEEDING"});
                 } else {
-                    model.addRow(new Object[]{fileID, fileName, String.valueOf(rate) + "kB", String.valueOf(curSize) + "/" + String.valueOf(fileSize), clientAddr, hash, fileStatus});
+                    model.addRow(new Object[]{fileID, fileName, String.valueOf(rate) + "kB", done, clientAddr, hash, fileStatus});
                 }
             }
             // Get the ListSelectionModel of the JTable
@@ -160,6 +194,7 @@ public class GUI extends javax.swing.JFrame {
             // set the selected interval of rows. Using the "rowNumber"
             // variable for the beginning and end selects only that one row.
             model1.setSelectionInterval(slr, slr);
+            // fileTable.
         } catch (Exception ex) {
             Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -167,16 +202,40 @@ public class GUI extends javax.swing.JFrame {
 
     }
 
+    public void updateCurSize() {
+        int fileID;
+
+        long curSize;
+
+        int i;
+
+
+        Vector<Integer> v = client.dataManager.getAllFile();
+        for (i = 0; i < v.size(); i++) {
+            fileID = v.get(i);
+            if (client.threadManager.getThread(fileID) != null) {
+                curSize = client.threadManager.getThread(fileID).getcurSize();
+                client.dataManager.updateCurrentSize(fileID, curSize);
+            }
+        }
+    }
+
     GUI(Client aThis) {
 
 
 
         initComponents();
-
+        this.gui = this;
         client = aThis;
         javax.swing.Timer t = new javax.swing.Timer(1000, new ClockListener());
+        //javax.swing.Timer t1 = new javax.swing.Timer(10000, new ClockListener1());
+        new Thread(new UpdateCurSize()).start();
+        //new Thread (new UpdateFileTable()).start();
+
         t.start();
-        drawTable();
+        //t1.start();
+
+        //drawTable();
         fileTable.addMouseListener(new MouseAdapter() {
 
             @Override
@@ -209,6 +268,28 @@ public class GUI extends javax.swing.JFrame {
 
     }
 
+    private void deleteFile(int ID) {
+        System.out.println("User want to delete file: " + ID);
+        ClientThread t = client.threadManager.getThread(ID);
+        if (t != null) t.sendMsg("CLOSE @CODE: [fuckent]");
+        client.dataManager.removeFile(ID);
+        drawTable();
+    }
+
+    private void closeAllThread() {
+        client.threadManager.closeAllThreads();
+        while (!client.threadManager.isEmpty()) {
+            try {
+                Thread.sleep(100);
+                //Thread.yield();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        System.exit(0);
+    }
+
     private class ClockListener implements ActionListener {
 
         public ClockListener() {
@@ -219,6 +300,37 @@ public class GUI extends javax.swing.JFrame {
             //System.out.println("Draw");
             drawTable();
             //throw new UnsupportedOperationException("Not supported yet.");
+        }
+    }
+
+    private class UpdateFileTable implements Runnable {
+
+        @Override
+        public void run() {
+            while (true) {
+                drawTable();
+                gui.repaint();
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+    }
+
+    private class UpdateCurSize implements Runnable {
+
+        @Override
+        public void run() {
+            while (true) {
+                updateCurSize();
+                try {
+                    Thread.sleep(20000);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
         }
     }
 
@@ -235,15 +347,28 @@ public class GUI extends javax.swing.JFrame {
         jMenuItem8 = new javax.swing.JMenuItem();
         jMenuItem13 = new javax.swing.JMenuItem();
         jMenuItem14 = new javax.swing.JMenuItem();
-        jMenuItem10 = new javax.swing.JMenuItem();
         jMenuItem5 = new javax.swing.JMenuItem();
+        jMenuItem10 = new javax.swing.JMenuItem();
         jMenuItem9 = new javax.swing.JMenuItem();
         jMenuItem6 = new javax.swing.JMenuItem();
         jMenuItem7 = new javax.swing.JMenuItem();
         jMenuItem11 = new javax.swing.JMenuItem();
         jMenuItem12 = new javax.swing.JMenuItem();
         jScrollPane1 = new javax.swing.JScrollPane();
-        fileTable = new javax.swing.JTable();
+        fileTable = new javax.swing.JTable(model) {
+            @Override public Component prepareRenderer(TableCellRenderer tcr, int row, int column) {
+                Component c = super.prepareRenderer(tcr, row, column);
+                if(isRowSelected(row)) {
+                    //c.setForeground(getSelectionForeground());
+                    c.setBackground(getSelectionBackground());
+                }else{
+                    // c.setForeground(getForeground());
+                    c.setBackground((row%2==1)?evenColor:getBackground());
+                }
+                return c;
+            }
+        }
+        ;
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
@@ -280,9 +405,6 @@ public class GUI extends javax.swing.JFrame {
         });
         function.add(jMenuItem14);
 
-        jMenuItem10.setText("Download file");
-        function.add(jMenuItem10);
-
         jMenuItem5.setText("Pause");
         jMenuItem5.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -291,10 +413,28 @@ public class GUI extends javax.swing.JFrame {
         });
         function.add(jMenuItem5);
 
+        jMenuItem10.setText("Download file");
+        jMenuItem10.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem10ActionPerformed(evt);
+            }
+        });
+        function.add(jMenuItem10);
+
         jMenuItem9.setText("Resume");
+        jMenuItem9.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem9ActionPerformed(evt);
+            }
+        });
         function.add(jMenuItem9);
 
         jMenuItem6.setText("Delete");
+        jMenuItem6.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem6ActionPerformed(evt);
+            }
+        });
         function.add(jMenuItem6);
 
         jMenuItem7.setText("Limit rate");
@@ -316,35 +456,22 @@ public class GUI extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Torrent - U");
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-
-        fileTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "File ID", "File Name", "Down [Up] Speed", "Done", "Client IP", "Hash", "Status"
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosed(java.awt.event.WindowEvent evt) {
+                formWindowClosed(evt);
             }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.Integer.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
-            };
-            boolean[] canEdit = new boolean [] {
-                false, false, false, false, false, false, false
-            };
-
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
             }
         });
+
         fileTable.setAutoscrolls(false);
         fileTable.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         fileTable.setFillsViewportHeight(true);
-        fileTable.setInheritsPopupMenu(true);
+        fileTable.setIntercellSpacing(new java.awt.Dimension(0, 0));
         fileTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        fileTable.setShowHorizontalLines(false);
+        fileTable.setShowVerticalLines(false);
         fileTable.getTableHeader().setReorderingAllowed(false);
         fileTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -360,6 +487,9 @@ public class GUI extends javax.swing.JFrame {
         jScrollPane1.setViewportView(fileTable);
         fileTable.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         fileTable.getColumnModel().getColumn(2).setPreferredWidth(120);
+        TableColumn column =  fileTable.getColumnModel().getColumn(3);
+        column.setCellRenderer(new ProgressRenderer());
+        fileTable.setShowGrid(false);
 
         jMenu1.setText("File");
 
@@ -425,12 +555,12 @@ public class GUI extends javax.swing.JFrame {
 
 private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
 // TODO add your handling code here:
-    System.exit(0);
+    this.closeAllThread();
 }//GEN-LAST:event_jMenuItem2ActionPerformed
 
 private void jMenu2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenu2ActionPerformed
 // TODO add your handling code here:
-    System.exit(0);
+    this.closeAllThread();
 }//GEN-LAST:event_jMenu2ActionPerformed
 
 private void jMenuItem3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem3ActionPerformed
@@ -461,7 +591,10 @@ private void jMenuItem4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
 
     String str = JOptionPane.showInputDialog(null, "Enter file ID: ", "Server for downloading", 1);
     
-    this.downloadFile(new Integer(str).intValue());
+    if (str == null) 
+            return ;
+
+    this.downloadFile(new Integer(str).intValue(), 0);
 
 }//GEN-LAST:event_jMenuItem4ActionPerformed
 
@@ -483,7 +616,7 @@ private void fileTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
 
     private void jMenuItem12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem12ActionPerformed
         // TODO add your handling code here:
-        System.exit(0);
+        this.closeAllThread();
     }//GEN-LAST:event_jMenuItem12ActionPerformed
 
     private void jMenuItem13ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem13ActionPerformed
@@ -502,6 +635,41 @@ private void fileTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         int ID = (Integer) model.getValueAt(row, 0);
         this.closeThread(ID);
     }//GEN-LAST:event_jMenuItem5ActionPerformed
+
+    private void jMenuItem9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem9ActionPerformed
+        // TODO add your handling code here:
+
+        int row = fileTable.getSelectedRow();
+        DefaultTableModel model = (DefaultTableModel) fileTable.getModel();
+        int ID = (Integer) model.getValueAt(row, 0);
+
+        System.out.println("User wants to resume file: " + ID);
+        this.resumeThread(ID);
+    }//GEN-LAST:event_jMenuItem9ActionPerformed
+
+    private void jMenuItem10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem10ActionPerformed
+        // TODO add your handling code here:
+        jMenuItem4ActionPerformed(evt);
+    }//GEN-LAST:event_jMenuItem10ActionPerformed
+
+    private void jMenuItem6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem6ActionPerformed
+        int row = fileTable.getSelectedRow();
+        DefaultTableModel model = (DefaultTableModel) fileTable.getModel();
+        int ID = (Integer) model.getValueAt(row, 0);
+
+        this.deleteFile(ID);
+    }//GEN-LAST:event_jMenuItem6ActionPerformed
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        // TODO add your handling code here:
+        System.out.println("Windows closing!");
+        closeAllThread();
+
+    }//GEN-LAST:event_formWindowClosing
+
+    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_formWindowClosed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable fileTable;
     private javax.swing.JPopupMenu function;

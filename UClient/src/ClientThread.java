@@ -9,15 +9,16 @@
  */
 abstract class ClientThread {
 
-    abstract public void setRate(int speed);
-
+    // abstract public void setRate(int speed);
     abstract public void closeThread();
 
     abstract public int getRate();
 
     abstract public String getClientAddr();
-    
+
     abstract public void recvMsg();
-    
+
     abstract public void sendMsg(String str);
+
+    abstract public Long getcurSize();
 }

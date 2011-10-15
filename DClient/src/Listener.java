@@ -37,12 +37,13 @@ public class Listener implements Runnable {
         } catch (IOException e) { }
         
         Socket conn;
+        UploadThread t;
         while (true) {
             try {
                 conn = listener.accept();
                 //conn.setReuseAddress(true);
-                Thread t =new Thread(new UploadThread(conn, this.client));
-                t.start();
+                t = new UploadThread(conn, this.client);
+                t.execute();
                 // client.threadManager.addThread(FileID, null);
                
 

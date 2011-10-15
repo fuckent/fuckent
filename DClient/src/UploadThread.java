@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * 
  * @author thong
  */
-class UploadThread extends ClientThread implements Runnable {
+class UploadThread extends ClientThread  {
 
     private Socket conn;
     private int speed;
@@ -37,6 +37,9 @@ class UploadThread extends ClientThread implements Runnable {
     private int rate;
     private boolean exitRequest;
     private ConcurrentLinkedQueue<String> msgQueue;
+    private int fileID;
+    private long totalCount;
+    private int id;
     
 
     @Override
@@ -45,9 +48,19 @@ class UploadThread extends ClientThread implements Runnable {
             return;
         }
         String msg = msgQueue.poll();
-        if (msg.compareTo("CLOSE @CODE: [fuckent]") == 0)  {
-            this.closeThread();
-            
+        if (msg.compareTo("CLOSE @CODE: [fuckent]") == 0) {
+            try {
+                this.conn.close();
+            } catch (IOException ex) {
+                Logger.getLogger(UploadThread.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            System.out.println("Closing thread");
+            client.dataManager.updateCurrentSize(fileID, totalCount);
+            //client.dataManager.updateStatus(fileID, "PAUSED");
+            client.threadManager.removeThread(fileID);
+            Thread.currentThread().stop();
+           
+
         }
         /* More here! */
         // SET RATE LIMT
@@ -76,11 +89,11 @@ class UploadThread extends ClientThread implements Runnable {
      *          reach limit rate
      * 
      */
-    @Override
-    public void run() {
+    //@Override
+    public void Run() {
         RandomAccessFile iS = null;
         int count;
-        long totalCount = 0;
+        totalCount = 0;
 
         try {
             // TODO: CODE HERE
@@ -106,8 +119,8 @@ class UploadThread extends ClientThread implements Runnable {
                         //
                         // Add this thread to thread manager
                         //
-                        client.threadManager.addThread(new Integer(lst[1]).intValue(), this);
-
+                        
+                        this.fileID = new Integer(lst[1]).intValue();
                         System.out.println("Sending file");
                         String location = rs.getString("fileLocation");
                         long fileSize = rs.getLong("fileSize");
@@ -119,6 +132,16 @@ class UploadThread extends ClientThread implements Runnable {
 
                         byte[] buf = new byte[4096];
                         int i = 0;
+                        while (i < client.gui.model.getRowCount()){
+                            if ((Integer) client.gui.model.getValueAt(i, 0) == fileID)
+                                break;
+                            i++;
+                        }
+                        
+                        client.gui.model.setSwingWorker(i, this);
+                        this.id = i;
+                        // client.threadManager.addThread(i, this);
+                        
                         while (totalCount < fileSize) {
                             this.recvMsg();
                             
@@ -126,9 +149,11 @@ class UploadThread extends ClientThread implements Runnable {
                             totalCount += count;
                             conn.getOutputStream().write(buf, 0, count);
                             conn.getOutputStream().flush();
+                            publish(Long.valueOf(totalCount*100/ fileSize).intValue());
                         }
                         conn.getOutputStream().flush();
                         System.out.println("Finish upload file");
+                        client.threadManager.removeThread(fileID);
 
                     } catch (SQLException ex) {
                         System.err.println("Exit thread");
@@ -136,7 +161,7 @@ class UploadThread extends ClientThread implements Runnable {
                 }
             }
         } catch (IOException ex) {
-            Logger.getLogger(UploadThread.class.getName()).log(Level.SEVERE, null, ex);
+             System.err.println("Upload error.\nExit thread!");
         } finally {
             if (conn != null) {
                 try {
@@ -159,17 +184,17 @@ class UploadThread extends ClientThread implements Runnable {
      *  Notice: Client in other side limit DOWNLOAD rate by sent RATE XXX, whereas
      *          this function is called by GUI to limit UPLOAD rate.
      */
-    @Override
+
     public void setRate(int speed) {
         this.rate = speed;
     }
 
     @Override
     public void closeThread() {
-        /**
-         * GUI call this function to exit sharing file.
-         */
-        this.exitRequest = true;
+        client.dataManager.updateCurrentSize(fileID, totalCount);
+        client.dataManager.updateStatus(fileID, "SHARING");
+        client.gui.model.setValueAt("SHARING", id, 6);
+        // client.threadManager.removeThread(this.id);
     }
 
     @Override
@@ -185,4 +210,32 @@ class UploadThread extends ClientThread implements Runnable {
     public String getClientAddr() {
         return conn.getRemoteSocketAddress().toString();
     }
+
+    @Override
+    public Long getcurSize() {
+        return -1l;
+    }
+
+    @Override
+    protected Integer doInBackground() throws Exception {
+        this.Run();
+        return 0;
+        //throw new UnsupportedOperationException("Not supported yet.");
+    }
+    
+    
+    @Override
+    protected void process(java.util.List<Integer> c) {
+        int i = 0;
+        
+        while (i < client.gui.model.getRowCount()) {
+            int k = (Integer)client.gui.model.getValueAt(i, 0);
+            if (k == this.fileID)
+            {
+                client.gui.model.setValueAt(c.get(c.size()-1), i, 3);
+            }
+            i++;
+        }
+    }
+        
 }

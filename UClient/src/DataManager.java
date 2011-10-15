@@ -4,6 +4,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 /*
@@ -21,16 +22,69 @@ public class DataManager {
     private Connection connection;
     private int nCount = -1;
     private ResultSet rs;
-
+    
     public synchronized ResultSet getFile(String fileID, String fileHash) {
         try {
-            ResultSet srs = statement.executeQuery(String.format("select * from FileManager where fileID = %s and fileHash = '%s'", fileID, fileHash));
-            return srs;
+            return statement.executeQuery(String.format("select * from fileManager where fileID = %s and fileHash = '%s'",fileID, fileHash));
+        } catch (SQLException ex) {
+            Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+    
+    
+   public synchronized long getcurSize(int fileID){
+        try{
+           ResultSet rs= statement.executeQuery(String.format("select curSize from FileManager where fileID=%d",fileID));
+           if(rs.next()){
+               return rs.getLong("curSize");
+           }
+           else  return -1;
+        }
+      catch (SQLException ex) {
+            Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+       return -1;
+    }     
+   
+   public synchronized long getfileSize(int fileID){
+        try{
+           ResultSet rs= statement.executeQuery(String.format("select fileSize from FileManager where fileID=%d",fileID));
+           if(rs.next()){
+               return rs.getLong("fileSize");
+           }
+           else  return -1;
+        }
+      catch (SQLException ex) {
+            Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+       return -1;
+    }        
+
+    public synchronized Vector<Integer> getAllFile() {
+        String fileStatus;
+        long curSize;
+        String hash;
+        long fileSize;
+        String fileName;
+        int ID;
+
+        Vector<Integer> v = new Vector<Integer>();
+        try {
+            rs = statement.executeQuery("select fileID from FileManager");
+            while (rs.next()) {
+                ID = rs.getInt("fileID");
+                v.add(ID);
+            }
+
+            //return srs;
         } catch (SQLException ex) {
             Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        return null;
+        return v;
 
     }
 
@@ -61,6 +115,62 @@ public class DataManager {
     public synchronized void updateStatus(int fileID, String status) {
         try {
             statement.executeUpdate(String.format("update FileManager set status = '%s' where fileID = %d", status, fileID));
+        } catch (SQLException ex) {
+            Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public synchronized String getStatus(int fileID) {
+        try {
+            ResultSet rs = statement.executeQuery(String.format("select status from FileManager where fileID = %d", fileID));
+            if (rs.next()) {
+                return rs.getString("status");
+            } else {
+                return null;
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+
+
+    
+    public synchronized String getfileName(int fileID) {
+        try {
+            ResultSet rs = statement.executeQuery(String.format("select fileName from FileManager where fileID=%d", fileID));
+            if (rs.next()) {
+                return rs.getString("fileName");
+            } else {
+                return null;
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return null;
+    }
+
+   
+    
+    public synchronized String getfileHash(int fileID) {
+        try {
+            ResultSet rs = statement.executeQuery(String.format("select fileHash from FileManager where fileID=%d", fileID));
+            if (rs.next()) {
+                return rs.getString("fileHash");
+            } else {
+                return null;
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return null;
+    }
+
+    public synchronized void updateCurrentSize(int fileID, long fileSize) {
+        try {
+            statement.executeUpdate(String.format("update FileManager set curSize = %s where fileID = %d", fileSize, fileID));
         } catch (SQLException ex) {
             Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
         }

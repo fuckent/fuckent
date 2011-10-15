@@ -62,6 +62,7 @@ public class ServerPI {
             // tell server we want unshare a file!!!
             out.format("UNSHARE %d %s\n", fileID, hash).flush();
             String str = reader.readLine();
+            System.out.println("line: " + str);
             if (str.matches("OK")) {
                 return true;
             }

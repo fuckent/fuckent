@@ -131,7 +131,7 @@ class SeedThread extends ClientThread implements Runnable {
 
     }
 
-    @Override
+
     public void setRate(int speed) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
@@ -148,6 +148,11 @@ class SeedThread extends ClientThread implements Runnable {
 
     @Override
     public String getClientAddr() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public Long getcurSize() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }
