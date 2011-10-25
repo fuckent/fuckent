@@ -42,8 +42,7 @@ import javax.swing.table.TableRowSorter;
  */
 public class GUI extends javax.swing.JFrame {
 
-    private static final Color evenColor = new Color(245, 245, 245);
-    private static final Color selectedColor = new Color(56, 114, 190);
+    private static final Color evenColor = new Color(230, 230, 230);
     Client client;
     public final GUI gui;
     public final FileTableModel model = new FileTableModel();
@@ -517,6 +516,7 @@ public class GUI extends javax.swing.JFrame {
         function.setRequestFocusEnabled(false);
 
         seedMenu.setText("Seed file");
+        seedMenu.setPreferredSize(new java.awt.Dimension(200, 22));
         seedMenu.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 seedMenuActionPerformed(evt);
@@ -613,6 +613,7 @@ public class GUI extends javax.swing.JFrame {
             }
         });
 
+        fileTable.setBorder(javax.swing.BorderFactory.createTitledBorder(""));
         fileTable.setAutoscrolls(false);
         fileTable.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         fileTable.setFillsViewportHeight(true);
@@ -624,14 +625,14 @@ public class GUI extends javax.swing.JFrame {
         fileTable.getTableHeader().setReorderingAllowed(false);
         fileTable.setUpdateSelectionOnSort(false);
         fileTable.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                fileTableMousePressed(evt);
-            }
             public void mouseReleased(java.awt.event.MouseEvent evt) {
                 fileTableMouseReleased(evt);
             }
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 fileTableMouseClicked(evt);
+            }
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                fileTableMousePressed(evt);
             }
         });
         jScrollPane1.setViewportView(fileTable);
@@ -692,15 +693,15 @@ public class GUI extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 775, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 770, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 245, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
         );
 
         java.awt.Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
-        setBounds((screenSize.width-786)/2, (screenSize.height-294)/2, 786, 294);
+        setBounds((screenSize.width-786)/2, (screenSize.height-272)/2, 786, 272);
     }// </editor-fold>//GEN-END:initComponents
 
 private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
