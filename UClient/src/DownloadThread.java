@@ -95,7 +95,7 @@ class DownloadThread extends ClientThread implements Runnable {
             this.clientAddr = lst[4 + (new Random()).nextInt(lst.length - 4)];
             try {
                 if (!client.dataManager.getFile(String.valueOf(fileID), fileHash).next()) {
-                    client.dataManager.addFile(fileID, fileName, fileSize, 0, fileHash, "DOWNLOADING", "./");
+                    client.dataManager.addFile(fileID, fileName, fileSize, 0, fileHash, "DOWNLOADING", "./" + fileName);
                 } else {
                     client.dataManager.updateStatus(fileID, "DOWNLOADING");
                 }

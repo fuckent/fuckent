@@ -41,7 +41,7 @@ import javax.swing.table.TableRowSorter;
  * @author thong
  */
 public class GUI extends javax.swing.JFrame {
-    
+
     private static final Color evenColor = new Color(230, 230, 230);
     Client client;
     public final GUI gui;
@@ -52,7 +52,7 @@ public class GUI extends javax.swing.JFrame {
 
     // TODO: CODE FROM HERE!!!
     private void downloadFile(int fileID, long pos) {
-        
+
         System.out.println("User wants to download file: " + fileID);
         System.out.println("Started download thread");
         DownloadThread t = new DownloadThread(fileID, pos, this.client);
@@ -69,10 +69,10 @@ public class GUI extends javax.swing.JFrame {
         //client.dataManager.
         //client.serverPI.download(fileID, "okie");
     }
-    
+
     private int seedFile(String path) {
         System.out.println("User wants to seed file: " + path);
-        
+
         SeedThread t = new SeedThread(this.client, path);
         this.executor.execute(t);
         //System.out.println(t.getPriority());
@@ -84,38 +84,38 @@ public class GUI extends javax.swing.JFrame {
         // drawTable();
         return 0;
     }
-    
+
     private void shareFile() {
-        
+
         new Thread(new Runnable() {
-            
+
             public void run() {
-                
+
                 int row = fileTable.getSelectedRow();
                 if (row < 0) {
                     return;
                 }
                 //DefaultTableModel model = (DefaultTableModel) fileTable.getModel();
-                int ID = (Integer) model.getValueAt(row, 0);//);
                 row = fileTable.convertRowIndexToModel(row);
+                int ID = (Integer) model.getValueAt(row, 0);//);
                 String Hash = (String) model.getValueAt(row, 5);
                 System.out.println("User wants to share file: " + ID);
                 Boolean share = client.serverPI.share(ID, Hash);
                 if (share) {
                     client.dataManager.updateStatus(ID, "SHARING");
                     model.setValueAt("SHARING", row, 6);
-                    JOptionPane.showMessageDialog(null, "Share file success", null, 1);
+                    JOptionPane.showMessageDialog(null, "Share file successful", null, 1);
                 } else {
-                    JOptionPane.showMessageDialog(null, "Share file false", "ERROR", 0);
+                    JOptionPane.showMessageDialog(null, "Can't share this file", "Error", 0);
                 }
             }
         }).start();
-        
+
     }
-    
+
     private void unShareFile() {
         new Thread(new Runnable() {
-            
+
             public void run() {
                 //System.out.print("User wants to unshare file: ");
                 int row = fileTable.getSelectedRow();
@@ -123,63 +123,83 @@ public class GUI extends javax.swing.JFrame {
                     return;
                 }
                 //DefaultTableModel model = (DefaultTableModel) fileTable.getModel();
-                int ID = (Integer) model.getValueAt(row, 0);
                 row = fileTable.convertRowIndexToModel(row);
-                
+                int ID = (Integer) model.getValueAt(row, 0);
+
                 System.out.print("User wants to unshare file: " + ID);
                 String Hash = (String) model.getValueAt(row, 5);
                 //System.out.println("User wants to unshare file: " + ID);
 
                 Boolean check = client.serverPI.unshare(ID, Hash);
                 if (check) {
-                    client.dataManager.updateStatus(ID, "UNSHARED");
-                    model.setValueAt("UNSHARED", row, 6);
-                    JOptionPane.showMessageDialog(null, "Unshare file success", null, 1);
+                    client.dataManager.updateStatus(ID, "SEEDED");
+                    model.setValueAt("SEEDED", row, 6);
+                    JOptionPane.showMessageDialog(null, "Unshare successful!", null, 1);
                 } else {
                     System.out.println("ERROR TO UNSHARE");
-                    JOptionPane.showMessageDialog(null, "Unshare file false", "ERROR", 0);
+                    JOptionPane.showMessageDialog(null, "Can't unshare this file", "Error", 0);
                 }
             }
         }).start();
-        
+
     }
-    
+
+    private void shutdownThread(int ID) {
+        //executor.
+        ID = fileTable.convertRowIndexToModel(ID);
+        int fileID = (Integer) model.getValueAt(ID, 0);
+        System.out.println("User wants to close thread processing file: " + fileID);
+        ClientThread t = (ClientThread) model.getSwingWorker(ID);
+        if (t != null) {
+            t.sendMsg("CLOSE @CODE: [fuckent]");
+            while (!t.isDone()) {
+                Thread.yield();
+            }
+        }
+        // client.threadManager.removeThread(fileID);
+    }
+
     private void closeThread(int ID) {
         //executor.
         ID = fileTable.convertRowIndexToModel(ID);
         int fileID = (Integer) model.getValueAt(ID, 0);
         System.out.println("User wants to close thread processing file: " + fileID);
         ClientThread t = (ClientThread) model.getSwingWorker(ID);
-        if (t != null)
-        { t.sendMsg("CLOSE @CODE: [fuckent]");
-        while (!t.isDone()) Thread.yield();}
+        if (t != null) {
+            t.sendMsg("CLOSE @CODE: [fuckent]");
+        }
         // client.threadManager.removeThread(fileID);
     }
-    
+
     private void resumeThread(int ID) {
         ID = fileTable.convertRowIndexToModel(ID);
         int fileID = (Integer) model.getValueAt(ID, 0);
         System.out.println("User wants to resume file: " + fileID);
-        
-       // if (client.dataManager.getStatus(fileID).compareTo("PAUSED") != 0) {
+
+        // if (client.dataManager.getStatus(fileID).compareTo("PAUSED") != 0) {
         //    return;
         //}
-        
+
         long currentSize = client.dataManager.getcurSize(fileID);
-        
+
         downloadFile(fileID, currentSize);
-        
+
     }
-    
-    private void limitRate(int fileID, int rate) {
-        System.out.print("User wants to limit file: " + fileID + " rate to " + rate + "kB");
+
+    private void limitRate(int row, int rate) {
+        int ID = (Integer) model.getValueAt(row, 0);
+        ClientThread t = (ClientThread) model.getSwingWorker(row);
+        t.sendMsg(String.format("LIMITRATE %d", rate));
+
+        System.out.print("User wants to limit file: " + ID + " rate to " + rate + "kB\n");
+        // client.threadManager.getThread(fileID).sendMsg();
     }
-    
+
     private int getRate(int fileID) {
         System.out.print("User wants to get limit rate of file: " + fileID);
         return 0;
     }
-    
+
     public void drawTable() {
         int fileID;
         String fileName;
@@ -191,7 +211,7 @@ public class GUI extends javax.swing.JFrame {
         int rate;
         ClientThread a;
         int i;
-        
+
         Vector<Integer> v = client.dataManager.getAllFile();
         for (i = 0; i < v.size(); i++) {
             fileID = v.get(i);
@@ -218,14 +238,15 @@ public class GUI extends javax.swing.JFrame {
             //   int rate = client.threadManager.getThread(fileID).getRate();
             Integer speed = Long.valueOf(curSize * 100 / fileSize).intValue();
             if (fileStatus != null) {
-                    if (fileStatus.matches("DOWNLOADING")) {
-                        client.dataManager.updateStatus(fileID, "PAUSED");
-                        fileStatus = "PAUSED";
-                    } else
-                    if (fileStatus.matches("UPLOADING")) {
-                        client.dataManager.updateStatus(fileID, "SHARING");
-                        fileStatus = "SHARING";
-                    }
+                if (fileStatus.matches("DOWNLOADING")) {
+                    client.dataManager.updateStatus(fileID, "PAUSED");
+                    fileStatus = "PAUSED";
+                } else if (fileStatus.matches("UPLOADING")) {
+                    client.dataManager.updateStatus(fileID, "SHARING");
+                    fileStatus = "SHARING";
+                } else if (fileStatus.matches("SHARING")) {
+                    client.serverPI.share(fileID, hash);
+                }
             }
             Files f = new Files(Integer.valueOf(fileID), fileName, 0 + "kB", speed, null, hash, fileStatus);
             model.addFile(f, null);
@@ -235,12 +256,12 @@ public class GUI extends javax.swing.JFrame {
 
     public void updateCurSize() {
         int fileID;
-        
+
         long curSize;
-        
+
         int i;
-        
-        
+
+
         Vector<Integer> v = client.dataManager.getAllFile();
         for (i = 0; i < v.size(); i++) {
             fileID = v.get(i);
@@ -250,11 +271,11 @@ public class GUI extends javax.swing.JFrame {
             }
         }
     }
-    
+
     GUI(Client aThis) {
-        
-        
-        
+
+
+
         initComponents();
         this.gui = this;
         client = aThis;
@@ -263,7 +284,7 @@ public class GUI extends javax.swing.JFrame {
 
         drawTable();
         fileTable.addMouseListener(new MouseAdapter() {
-            
+
             @Override
             public void mouseReleased(MouseEvent e) {
                 // Left mouse click
@@ -284,60 +305,123 @@ public class GUI extends javax.swing.JFrame {
                     // set the selected interval of rows. Using the "rowNumber"
                     // variable for the beginning and end selects only that one row.
                     model.setSelectionInterval(rowNumber, rowNumber);
-                    // gui.
+                    popupSetup();
                     function.show(e.getComponent(), e.getX(), e.getY());
-                    
-                    
+
+
                 }
             }
         });
-        
-        
-        
+
+
+
     }
-    
+
+    private void popupSetup() {
+        this.seedMenu.setEnabled(true);
+        this.downloadMenu.setEnabled(true);
+        this.shareMenu.setEnabled(true);
+        this.unShareMenu.setEnabled(true);
+        this.pauseMenu.setEnabled(true);
+        this.resumeMenu.setEnabled(true);
+        this.deleteMenu.setEnabled(true);
+        this.limitRateMenu.setEnabled(false);
+        int id = fileTable.getSelectedRow();
+        //int 
+        if (id < 0) {
+            this.resumeMenu.setEnabled(false);
+            this.pauseMenu.setEnabled(false);
+            this.shareMenu.setEnabled(false);
+            this.unShareMenu.setEnabled(false);
+            this.deleteMenu.setEnabled(false);
+
+            return;
+        }
+        id = fileTable.convertRowIndexToModel(id);
+        String str = (String) model.getValueAt(id, 6);
+        if (str.matches("DOWNLOADING|UPLOADING")) {
+            this.seedMenu.setEnabled(false);
+            this.shareMenu.setEnabled(false);
+            this.unShareMenu.setEnabled(false);
+            this.downloadMenu.setEnabled(false);
+            this.limitRateMenu.setEnabled(true);
+            this.resumeMenu.setEnabled(false);
+        } else if (str.matches("SEEDING")) {
+            this.seedMenu.setEnabled(false);
+            this.downloadMenu.setEnabled(false);
+            this.pauseMenu.setEnabled(false);
+            this.resumeMenu.setEnabled(false);
+            this.shareMenu.setEnabled(false);
+            this.unShareMenu.setEnabled(false);
+        } else if (str.matches("SEEDED")) {
+            this.seedMenu.setEnabled(false);
+            this.downloadMenu.setEnabled(false);
+            this.pauseMenu.setEnabled(false);
+            this.resumeMenu.setEnabled(false);
+            //this.shareMenu.setEnabled(false);
+            this.unShareMenu.setEnabled(false);
+        } else if (str.matches("SHARING")) {
+            this.seedMenu.setEnabled(false);
+            this.downloadMenu.setEnabled(false);
+            this.pauseMenu.setEnabled(false);
+            this.resumeMenu.setEnabled(false);
+            this.shareMenu.setEnabled(false);
+            //this.unShareMenu.setEnabled(false);  
+        } else if (str.matches("PAUSED")) {
+            this.seedMenu.setEnabled(false);
+            this.downloadMenu.setEnabled(false);
+            this.pauseMenu.setEnabled(false);
+            //this.resumeMenu.setEnabled(false);
+            this.shareMenu.setEnabled(false);
+            this.unShareMenu.setEnabled(false);
+        }
+
+
+    }
+
     private void deleteFile(int ID) {
         ID = fileTable.convertRowIndexToModel(ID);
         int fileID = (Integer) model.getValueAt(ID, 0);
+        model.setValueAt(-1, ID, 0);
         System.out.println("User want to delete file: " + ID);
         final RowFilter<TableModel, Integer> filter = new RowFilter<TableModel, Integer>() {
-            
+
             @Override
             public boolean include(Entry<? extends TableModel, ? extends Integer> entry) {
                 return !deleteRowSet.contains(entry.getIdentifier());
             }
         };
-        
+
         SwingWorker worker = model.getSwingWorker(ID);
-            if(worker!=null && !worker.isDone()) {
-                worker.cancel(true);
-            }
-            
+        if (worker != null && !worker.isDone()) {
+            worker.cancel(true);
+        }
+
         deleteRowSet.add(ID);
         sorter.setRowFilter(filter);
         fileTable.repaint();
-/*        ClientThread t = (ClientThread) model.getSwingWorker(ID);
+        /*        ClientThread t = (ClientThread) model.getSwingWorker(ID);
         if (t != null) {
-            t.sendMsg("CLOSE @CODE: [fuckent]");
+        t.sendMsg("CLOSE @CODE: [fuckent]");
         } */
         client.dataManager.removeFile(fileID);
         //drawTable();
     }
-    
+
     private void closeAllThread() {
         int i = 0;
         while (i < fileTable.getRowCount()) {
-            this.closeThread(i);
+            this.shutdownThread(i);
             i++;
         }
         System.exit(0);
     }
-    
+
     private class ClockListener implements ActionListener {
-        
+
         public ClockListener() {
         }
-        
+
         @Override
         public void actionPerformed(ActionEvent ae) {
             //System.out.println("Draw");
@@ -345,9 +429,9 @@ public class GUI extends javax.swing.JFrame {
             //throw new UnsupportedOperationException("Not supported yet.");
         }
     }
-    
+
     private class UpdateFileTable implements Runnable {
-        
+
         @Override
         public void run() {
             while (true) {
@@ -361,9 +445,9 @@ public class GUI extends javax.swing.JFrame {
             }
         }
     }
-    
+
     private class UpdateCurSize implements Runnable {
-        
+
         @Override
         public void run() {
             while (true) {
@@ -481,6 +565,11 @@ public class GUI extends javax.swing.JFrame {
         function.add(deleteMenu);
 
         limitRateMenu.setText("Limit rate");
+        limitRateMenu.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                limitRateMenuActionPerformed(evt);
+            }
+        });
         function.add(limitRateMenu);
 
         aboutMenu.setText("About");
@@ -602,12 +691,12 @@ private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
 // TODO add your handling code here:
     this.closeAllThread();
 }//GEN-LAST:event_jMenuItem2ActionPerformed
-    
+
 private void jMenu2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenu2ActionPerformed
 // TODO add your handling code here:
     this.closeAllThread();
 }//GEN-LAST:event_jMenu2ActionPerformed
-    
+
 private void jMenuItem3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem3ActionPerformed
 // TODO add your handling code here:
 
@@ -619,7 +708,7 @@ private void jMenuItem3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
     Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
     }*/
 }//GEN-LAST:event_jMenuItem3ActionPerformed
-    
+
 private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
     // TODO add your handling code here:
     JFileChooser jFC = new javax.swing.JFileChooser();
@@ -628,62 +717,62 @@ private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
         System.out.println(jFC.getSelectedFile().getAbsolutePath());
         this.seedFile(jFC.getSelectedFile().getAbsolutePath());
     }
-    
+
 }//GEN-LAST:event_jMenuItem1ActionPerformed
-    
+
 private void jMenuItem4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem4ActionPerformed
 // TODO add your handling code here:
 
     String str = JOptionPane.showInputDialog(null, "Enter file ID: ", "Server for downloading", 1);
-    
+
     if (str == null) {
         return;
     }
-    
+
     this.downloadFile(new Integer(str).intValue(), 0);
-    
+
 }//GEN-LAST:event_jMenuItem4ActionPerformed
-    
+
 private void fileTableMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_fileTableMouseReleased
 // TODO add your handling code here:
 }//GEN-LAST:event_fileTableMouseReleased
-    
+
 private void fileTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_fileTableMouseClicked
 }//GEN-LAST:event_fileTableMouseClicked
-    
+
     private void fileTableMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_fileTableMousePressed
         // TODO add your handling code here:
     }//GEN-LAST:event_fileTableMousePressed
-    
+
     private void seedMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_seedMenuActionPerformed
         // TODO add your handling code here:
         jMenuItem1ActionPerformed(evt);
     }//GEN-LAST:event_seedMenuActionPerformed
-    
+
     private void quitMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_quitMenuActionPerformed
         // TODO add your handling code here:
         this.closeAllThread();
     }//GEN-LAST:event_quitMenuActionPerformed
-    
+
     private void shareMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_shareMenuActionPerformed
         // TODO add your handling code here:
         this.shareFile();
     }//GEN-LAST:event_shareMenuActionPerformed
-    
+
     private void unShareMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unShareMenuActionPerformed
         // TODO add your handling code here:
         this.unShareFile();
     }//GEN-LAST:event_unShareMenuActionPerformed
-    
+
     private void pauseMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pauseMenuActionPerformed
         int row = fileTable.getSelectedRow();
         if (row == -1) {
             return;
         }
-        
+
         this.closeThread(row);
     }//GEN-LAST:event_pauseMenuActionPerformed
-    
+
     private void resumeMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_resumeMenuActionPerformed
         // TODO add your handling code here:
 
@@ -691,15 +780,15 @@ private void fileTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         if (row < 0) {
             return;
         }
-        
+
         this.resumeThread(row);
     }//GEN-LAST:event_resumeMenuActionPerformed
-    
+
     private void downloadMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_downloadMenuActionPerformed
         // TODO add your handling code here:
         jMenuItem4ActionPerformed(evt);
     }//GEN-LAST:event_downloadMenuActionPerformed
-    
+
     private void deleteMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteMenuActionPerformed
         int row = fileTable.getSelectedRow();
         if (row < 0) {
@@ -710,17 +799,25 @@ private void fileTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
 
         this.deleteFile(row);
     }//GEN-LAST:event_deleteMenuActionPerformed
-    
+
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
         // TODO add your handling code here:
         System.out.println("Windows closing!");
         closeAllThread();
-        
+
     }//GEN-LAST:event_formWindowClosing
-    
+
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
         // TODO add your handling code here:
     }//GEN-LAST:event_formWindowClosed
+
+    private void limitRateMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_limitRateMenuActionPerformed
+        String limit = JOptionPane.showInputDialog(null, "Enter limit rate(kb): ", null, 1);
+        int row = fileTable.getSelectedRow();
+        row = fileTable.convertRowIndexToModel(row);
+
+        this.limitRate(row, new Integer(limit).intValue());
+    }//GEN-LAST:event_limitRateMenuActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem aboutMenu;
     private javax.swing.JMenuItem deleteMenu;

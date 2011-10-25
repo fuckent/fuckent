@@ -78,7 +78,7 @@ public class ClientManager {
 
     public synchronized void removeClientFile(String clientAddr, int port, int fileID) {
         try {
-            statement.executeUpdate("delete from clientManager where clientAdrr = '" + clientAddr + "' and clientPort = " + port + " and fileID = " + fileID);
+            statement.executeUpdate("delete from clientManager where clientAddr = '" + clientAddr + "' and clientPort = " + port + " and fileID = " + fileID);
         } catch (SQLException e) {
             // if the error message is "out of memory", 
             // it probably means no database file is found

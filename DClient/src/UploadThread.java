@@ -1,16 +1,12 @@
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -26,21 +22,32 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * 
  * @author thong
  */
-class UploadThread extends ClientThread  {
+class UploadThread extends ClientThread {
 
     private Socket conn;
-    private int speed;
+    //private int speed;
     private Client client;
     private InputStreamReader in;
     private BufferedReader reader;
     private PrintWriter out;
-    private int rate;
-    private boolean exitRequest;
+    private long rate;
+    //private boolean exitRequest;
     private ConcurrentLinkedQueue<String> msgQueue;
     private int fileID;
     private long totalCount;
     private int id;
-    
+    private long time;
+    private long dtime;
+    private int limitrate;
+    // private int uplimitrate;
+    //private int downlimitrate;
+    private int returnrate;
+    private int countByte;
+    private int dRate;
+    private int uRate;
+    private int count;
+    private long t;
+    private long c;
 
     @Override
     public void recvMsg() {
@@ -55,30 +62,40 @@ class UploadThread extends ClientThread  {
                 Logger.getLogger(UploadThread.class.getName()).log(Level.SEVERE, null, ex);
             }
             System.out.println("Closing thread");
-            client.dataManager.updateCurrentSize(fileID, totalCount);
+            //client.dataManager.updateCurrentSize(fileID, totalCount);
+            closeThread();
             //client.dataManager.updateStatus(fileID, "PAUSED");
-            client.threadManager.removeThread(fileID);
+            //client.threadManager.removeThread(fileID);
             Thread.currentThread().stop();
-           
-
+        } else if (msg.matches("DOWNLOADRATE [-+]?[0-9]+")) {
+            String[] lst = msg.split(" ");
+            this.dRate = new Integer(lst[1]).intValue();
+        } else if (msg.matches("LIMITRATE [-+]?[0-9]+")) {
+            String[] lst = msg.split(" ");
+            this.uRate = new Integer(lst[1]).intValue();
         }
-        /* More here! */
-        // SET RATE LIMT
-        //
-        
     }
-    
-    
+
     @Override
     public void sendMsg(String str) {
         msgQueue.add(str);
     }
-    
+
     UploadThread(Socket conn, Client client) {
         System.out.println("DOWN REQ!");
         this.conn = conn;
         this.client = client;
-        msgQueue = new ConcurrentLinkedQueue<String> ();
+        msgQueue = new ConcurrentLinkedQueue<String>();
+        dtime = 0;
+        limitrate = -1;
+        returnrate = 0;
+        countByte = 0;
+        uRate = -1;
+        dRate = -1;
+
+
+        // uplimitrate = -1;
+        // downlimitrate = -1;
     }
 
     /**
@@ -92,7 +109,7 @@ class UploadThread extends ClientThread  {
     //@Override
     public void Run() {
         RandomAccessFile iS = null;
-        int count;
+        //int count;
         totalCount = 0;
 
         try {
@@ -107,86 +124,142 @@ class UploadThread extends ClientThread  {
 
             String line = reader.readLine();
             System.out.println("REQ: " + line);
+            ResultSet rs;
             if (line.matches("DOWNLOAD [0-9]+ [0-9a-f]+ [0-9]+")) {
                 String[] lst = line.split(" ");
-                totalCount = new Integer(lst[3]).longValue();
-                ResultSet rs = client.dataManager.getFile(lst[1], lst[2]);
+                totalCount = Long.valueOf(lst[3]);
+                rs = client.dataManager.getFile(lst[1], lst[2]);
                 if (rs == null) {
                     out.print("ERROR\n");
                     out.flush();
                 } else {
-                    try {
-                        //
-                        // Add this thread to thread manager
-                        //
-                        
-                        this.fileID = new Integer(lst[1]).intValue();
-                        System.out.println("Sending file");
-                        String location = rs.getString("fileLocation");
-                        long fileSize = rs.getLong("fileSize");
-                        out.format("OK %d\n", fileSize).flush();
-                        File f = new File(location);
-                        iS = new RandomAccessFile(location, "r");
-                        //System.out.println("totalCount: " + totalCount);
-                        iS.seek(totalCount);
 
-                        byte[] buf = new byte[4096];
-                        int i = 0;
-                        while (i < client.gui.model.getRowCount()){
-                            if ((Integer) client.gui.model.getValueAt(i, 0) == fileID)
-                                break;
-                            i++;
-                        }
-                        
-                        client.gui.model.setSwingWorker(i, this);
-                        this.id = i;
-                        // client.threadManager.addThread(i, this);
-                        
-                        while (totalCount < fileSize) {
-                            this.recvMsg();
-                            
-                            count = iS.read(buf);
-                            totalCount += count;
-                            conn.getOutputStream().write(buf, 0, count);
-                            conn.getOutputStream().flush();
-                            publish(Long.valueOf(totalCount*100/ fileSize).intValue());
-                        }
-                        conn.getOutputStream().flush();
-                        System.out.println("Finish upload file");
-                        client.threadManager.removeThread(fileID);
+                    //
+                    // Add this thread to thread manager
+                    //
 
-                    } catch (SQLException ex) {
-                        System.err.println("Exit thread");
+                    this.fileID = new Integer(lst[1]).intValue();
+                    System.out.println("Sending file");
+                    String location = client.dataManager.getFileLocaltion(lst[1]);
+                    long fileSize = client.dataManager.getfileSize(fileID);
+                    out.format("OK %d\n", fileSize).flush();
+                    File f = new File(location);
+                    iS = new RandomAccessFile(location, "r");
+                    //System.out.println("totalCount: " + totalCount);
+                    iS.seek(totalCount);
+
+                    byte[] buf = new byte[4096];
+                    int i = 0;
+                    while (i < client.gui.model.getRowCount()) {
+                        if ((Integer) client.gui.model.getValueAt(i, 0) == fileID) {
+                            break;
+                        }
+                        i++;
                     }
+
+                    this.id = i;
+                    client.gui.model.setSwingWorker(this.id, this);
+                    // client.threadManager.addThread(i, this);
+                    client.gui.model.setValueAt("UPLOADING", this.id, 6);
+
+                    this.t = System.currentTimeMillis();
+                    this.c = this.totalCount;
+                    time = System.nanoTime();
+
+                    new Thread(new CaluRate()).start();
+
+                    while (totalCount < fileSize) {
+                        if (this.reader.ready()) {
+                            line = reader.readLine();
+                            this.sendMsg(line);
+                        }
+
+                        this.recvMsg();
+
+                        count = iS.read(buf);
+                        totalCount += count;
+                        conn.getOutputStream().write(buf, 0, count);
+                        conn.getOutputStream().flush();
+                        this.limitRate();//.setRate();
+                        publish(new ThreadInfo(Long.valueOf(totalCount * 100 / fileSize).intValue(), this.getRate()));
+                    }
+                    conn.getOutputStream().flush();
+                    // this.closeThread();
+                    client.gui.model.setValueAt("SHARING", id, 6);
+                    client.dataManager.updateCurrentSize(fileID, fileSize);
+                    System.out.println("Finish upload file");
+                    // client.threadManager.removeThread(fileID);
                 }
+
             }
         } catch (IOException ex) {
-             System.err.println("Upload error.\nExit thread!");
+            this.closeThread();
+            System.err.println("Upload error.\nExit thread!");
         } finally {
             if (conn != null) {
                 try {
                     conn.close();
                 } catch (IOException ioe) {
-                    ioe.printStackTrace();
                 }
             }
             if (iS != null) {
                 try {
                     iS.close();
                 } catch (IOException ioe) {
-                    ioe.printStackTrace();
                 }
             }
         }
     }
-
     /**
      *  Notice: Client in other side limit DOWNLOAD rate by sent RATE XXX, whereas
      *          this function is called by GUI to limit UPLOAD rate.
      */
+    long tC = 0;
 
-    public void setRate(int speed) {
-        this.rate = speed;
+    public void caluRate() {
+        long t1 = System.currentTimeMillis();
+        long deltaT = t1 - this.t;
+        long c1 = this.totalCount;
+        long deltaC = c1 - this.c;
+
+        if (deltaT > 0) {
+            this.rate = deltaC * 1000 / deltaT / 1024;
+        }
+
+        t = t1;
+        c = c1;
+    }
+
+    private void sleepNano(long time) {
+        long tTime = System.nanoTime();
+        long t1 = time + tTime;
+        try {
+            Thread.sleep(time / 1000000);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(UploadThread.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        while (t1 > System.nanoTime()) {
+            // do nothing
+            //System.out.print
+        }
+    }
+
+    public void limitRate() {
+        long t1 = System.nanoTime();
+        dtime = t1 - time;
+        int tempRate = uRate;
+        if (dRate < uRate && dRate > 0) {
+            tempRate = dRate;
+        }
+
+        if (tempRate > 0) {
+            long truetime = count * 1000 / (1024 * tempRate) * 1000000;
+            if (truetime > dtime) {
+                this.sleepNano(2*(truetime - dtime));
+            }
+        }
+
+        time = t1;
     }
 
     @Override
@@ -198,11 +271,11 @@ class UploadThread extends ClientThread  {
     }
 
     @Override
-    public int getRate() {
+    public synchronized long getRate() {
         /**
          * GUI call this function to get upload speed and then show on fileTable (GUI)
          */
-        return this.speed;
+        return rate;
         // throw new UnsupportedOperationException("Not supported yet.");
     }
 
@@ -222,20 +295,27 @@ class UploadThread extends ClientThread  {
         return 0;
         //throw new UnsupportedOperationException("Not supported yet.");
     }
-    
-    
+
     @Override
-    protected void process(java.util.List<Integer> c) {
-        int i = 0;
-        
-        while (i < client.gui.model.getRowCount()) {
-            int k = (Integer)client.gui.model.getValueAt(i, 0);
-            if (k == this.fileID)
-            {
-                client.gui.model.setValueAt(c.get(c.size()-1), i, 3);
+    protected void process(java.util.List<ThreadInfo> c) {
+
+        client.gui.model.setValueAt(c.get(c.size() - 1).getP(), this.id, 3);
+        client.gui.model.setValueAt(c.get(c.size() - 1).getRate(), this.id, 2);
+
+    }
+
+    private class CaluRate implements Runnable {
+
+        @Override
+        public void run() {
+            while (true) {
+                try {
+                    caluRate();
+                    Thread.sleep(600);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(UploadThread.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
-            i++;
         }
     }
-        
 }

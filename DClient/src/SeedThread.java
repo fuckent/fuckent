@@ -1,7 +1,6 @@
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -32,6 +31,7 @@ class SeedThread extends ClientThread {
     private int key;
     private boolean closeReq = false;
 
+    @Override
     public void recvMsg() {
         if (msgQueue.isEmpty()) {
             return;
@@ -49,6 +49,7 @@ class SeedThread extends ClientThread {
         }
     }
 
+    @Override
     public void sendMsg(String str) {
         msgQueue.add(str);
     }
@@ -73,7 +74,7 @@ class SeedThread extends ClientThread {
                     if (this.closeReq)
                             return null;
                     
-                    publish(Long.valueOf(total * 100 / this.size).intValue());
+                    publish(new ThreadInfo(Long.valueOf(total * 100 / this.size).intValue(), 0));
 
                     md.update(dataBytes, 0, nread);
                 }
@@ -187,9 +188,11 @@ class SeedThread extends ClientThread {
 
 
     @Override
-    protected void process(java.util.List<Integer> c) {
+    protected void process(java.util.List<ThreadInfo> c) {
 
-        client.gui.model.setValueAt(c.get(c.size() - 1), key, 3);
+                 client.gui.model.setValueAt(c.get(c.size()-1).getP(), key, 3);
+                client.gui.model.setValueAt(c.get(c.size()-1).getRate(), key,  2);
+
 
     }
 
@@ -205,13 +208,15 @@ class SeedThread extends ClientThread {
     }
 
     @Override
-    public int getRate() {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public long getRate() {
+        return 0;
+        //throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
     public String getClientAddr() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return "[unknown]";
+        //throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
