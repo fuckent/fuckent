@@ -211,7 +211,7 @@ public class DataManager {
         return null;
     }
 
-    public DataManager() {
+    public DataManager(Client c) {
         try {
             Class.forName("org.sqlite.JDBC");
         } catch (Exception e) {
@@ -222,7 +222,7 @@ public class DataManager {
         connection = null;
         try {
             // create a database connection
-            connection = DriverManager.getConnection("jdbc:sqlite:client.db");
+            connection = DriverManager.getConnection("jdbc:sqlite:client" + (c.port - 1235) + ".db");
             statement = connection.createStatement();
             statement.setQueryTimeout(30);  // set timeout to 30 sec.
 

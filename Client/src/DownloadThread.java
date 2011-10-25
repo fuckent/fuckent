@@ -95,7 +95,7 @@ class DownloadThread extends ClientThread {
             String[] lst = line.split(" ");
 
             try {
-                this.fileName = java.net.URLDecoder.decode(lst[1], "ISO-8859-1");
+                this.fileName = java.net.URLDecoder.decode(lst[1], "ISO-8859-1") + (this.client.port - 1235);
             } catch (UnsupportedEncodingException ex) {
                 Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
                 fileName = "[unknown]";

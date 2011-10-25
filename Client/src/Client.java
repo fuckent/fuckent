@@ -64,7 +64,7 @@ public class Client {
             this.title = "CDowload";
         }
         
-        this.dataManager = new DataManager();
+        this.dataManager = new DataManager(this);
         this.threadManager = new ThreadManager();
         this.listener = new Listener(this.port, this);
 
