@@ -193,10 +193,14 @@ class DownloadThread extends ClientThread {
                     publish(new ThreadInfo(Long.valueOf(totalCount * 100 / fileSize).intValue(), this.getRate()));
                 }
 
+                publish(new ThreadInfo(-1, -1));
+                client.gui.model.setValueAt("SEEDED", this.id, 6);
+                client.gui.model.setValueAt(null, this.id, 2);
+                client.gui.model.setValueAt(100, this.id, 3);
+                client.gui.model.setValueAt(null, this.id, 4);
                 client.dataManager.updateStatus(fileID, "SEEDED");
                 client.dataManager.updateCurrentSize(fileID, fileSize);
-                client.gui.model.setValueAt("SEEDED", this.id, 6);
-                //client.gui.fileTable.repaint();
+
                 System.out.println("Finish download file");
 
             } else {
@@ -246,8 +250,11 @@ class DownloadThread extends ClientThread {
 
     @Override
     public void closeThread() {
+        publish(new ThreadInfo(-1, -1));
 
         client.gui.model.setValueAt("PAUSED", this.id, 6);
+        client.gui.model.setValueAt(null, this.id, 4);
+        client.gui.model.setValueAt(null, this.id, 2);
         // client.gui.fileTable.repaint();
         client.dataManager.updateCurrentSize(fileID, totalCount);
         client.dataManager.updateStatus(fileID, "PAUSED");
@@ -280,8 +287,13 @@ class DownloadThread extends ClientThread {
         while (i < client.gui.model.getRowCount()) {
             int k = (Integer) client.gui.model.getValueAt(i, 0);
             if (k == this.fileID) {
-                client.gui.model.setValueAt(c.get(c.size() - 1).getP(), i, 3);
-                client.gui.model.setValueAt(c.get(c.size() - 1).getRate(), i, 2);
+                if (c.get(c.size() - 1).getP() < 0) {
+                    // client.gui.model.setValueAt(0, i, 3);
+                    client.gui.model.setValueAt(null, i, 2);
+                } else {
+                    client.gui.model.setValueAt(c.get(c.size() - 1).getP(), i, 3);
+                    client.gui.model.setValueAt(c.get(c.size() - 1).getRate(), i, 2);
+                }
             }
             i++;
         }

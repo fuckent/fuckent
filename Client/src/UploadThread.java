@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.sql.ResultSet;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -48,6 +49,8 @@ class UploadThread extends ClientThread {
     private int count;
     private long t;
     private long c;
+    private String fileName;
+    private String hash;
 
     @Override
     public void recvMsg() {
@@ -108,6 +111,8 @@ class UploadThread extends ClientThread {
         RandomAccessFile iS = null;
         //int count;
         totalCount = 0;
+        Object vt;
+        Vector vtt;
 
         try {
             // TODO: CODE HERE
@@ -148,8 +153,27 @@ class UploadThread extends ClientThread {
                         }
                         i++;
                     }
-
-                    this.id = i;
+                    
+                    vtt = (Vector) client.gui.model.getDataVector().elementAt(i);
+                   // this.fileID = vtt.elementAt(i)
+                    //this.client.gui.model.addFile(new Files(fileID, this.fileName, 0 + " kB", 0, clientAddr, fileHash, "DOWNLOADING"), this);
+                    
+                    //vt = client.gui.model.getDataVector().get(i);
+                    this.fileID = ((Integer)vtt.elementAt(0)).intValue();
+                    this.fileName = (String)vtt.elementAt(1);
+                    this.hash = (String)vtt.elementAt(5);
+                    client.gui.model.addFile(new Files(
+                    this.fileID, 
+                            this.fileName
+                    , 
+                    null,
+                    0,
+                    null,
+                    this.hash, 
+                    null), 
+                            this);
+                    
+                    this.id = client.gui.model.getRowCount()-1;
                     client.gui.model.setSwingWorker(this.id, this);
                     // client.threadManager.addThread(i, this);
                     client.gui.model.setValueAt("UPLOADING", this.id, 6);
@@ -178,10 +202,10 @@ class UploadThread extends ClientThread {
                         publish(new ThreadInfo(Long.valueOf(totalCount * 100 / fileSize).intValue(), this.getRate()));
                     }
                     conn.getOutputStream().flush();
-                    // this.closeThread();
-                    client.gui.model.setValueAt("SHARING", id, 6);
-                    client.gui.model.setValueAt(null, this.id, 4);
-                    client.dataManager.updateCurrentSize(fileID, fileSize);
+                    this.closeThread();
+                    //client.gui.model.setValueAt("SHARING", id, 6);
+                    //client.gui.model.setValueAt(null, this.id, 4);
+                    //client.dataManager.updateCurrentSize(fileID, fileSize);
                     System.out.println("Finish upload file");
                     // client.threadManager.removeThread(fileID);
                 }
@@ -262,10 +286,12 @@ class UploadThread extends ClientThread {
 
     @Override
     public void closeThread() {
+        //this
         client.dataManager.updateCurrentSize(fileID, totalCount);
         client.dataManager.updateStatus(fileID, "SHARING");
         client.gui.model.setValueAt("SHARING", id, 6);
         client.gui.model.setValueAt(null, this.id, 4);
+        this.client.gui.delFile_(this.id);
         // client.threadManager.removeThread(this.id);
     }
 

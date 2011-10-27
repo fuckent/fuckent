@@ -249,7 +249,7 @@ public class GUI extends javax.swing.JFrame {
                     client.serverPI.share(fileID, hash);
                 }
             }
-            Files f = new Files(Integer.valueOf(fileID), fileName, 0 + "kB", speed, null, hash, fileStatus);
+            Files f = new Files(Integer.valueOf(fileID), fileName, null , speed, null, hash, fileStatus);
             model.addFile(f, null);
         }
     }
@@ -345,6 +345,7 @@ public class GUI extends javax.swing.JFrame {
             this.unShareMenu.setEnabled(false);
             this.downloadMenu.setEnabled(false);
             this.limitRateMenu.setEnabled(true);
+            this.deleteMenu.setEnabled(false);
             this.resumeMenu.setEnabled(false);
         } else if (str.matches("SEEDING")) {
             this.seedMenu.setEnabled(false);
@@ -379,11 +380,9 @@ public class GUI extends javax.swing.JFrame {
 
     }
 
-    private void deleteFile(int ID) {
-        ID = fileTable.convertRowIndexToModel(ID);
+    public void delFile_(int ID) {
         int fileID = (Integer) model.getValueAt(ID, 0);
-        model.setValueAt(-1, ID, 0);
-        System.out.println("User want to delete file: " + ID);
+        model.setValueAt(-1, ID, 0);        
         final RowFilter<TableModel, Integer> filter = new RowFilter<TableModel, Integer>() {
 
             @Override
@@ -391,18 +390,28 @@ public class GUI extends javax.swing.JFrame {
                 return !deleteRowSet.contains(entry.getIdentifier());
             }
         };
+
+        deleteRowSet.add(ID);
+
+        sorter.setRowFilter(filter);
+        fileTable.repaint();
+    }
+    private void deleteFile(int ID) {
+        ID = fileTable.convertRowIndexToModel(ID);
+        System.out.println("User want to delete file: " + ID);
         
         ClientThread worker = (ClientThread) model.getSwingWorker(ID);
         
         if (worker != null) worker.sendMsg("CLOSE @CODE: [fuckent]");
 
-        deleteRowSet.add(ID);
-        sorter.setRowFilter(filter);
-        fileTable.repaint();
         /*        ClientThread t = (ClientThread) model.getSwingWorker(ID);
         if (t != null) {
         t.sendMsg("CLOSE @CODE: [fuckent]");
         } */
+        
+         int fileID = (Integer) model.getValueAt(ID, 0);
+
+         this.delFile_(ID);
         client.dataManager.removeFile(fileID);
         //drawTable();
     }
