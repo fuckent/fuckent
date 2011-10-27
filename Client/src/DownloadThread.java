@@ -1,6 +1,7 @@
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -9,6 +10,8 @@ import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -35,7 +38,7 @@ class DownloadThread extends ClientThread {
     private PrintWriter out;
     private String fileHash;
     private long pos;
-    private File File;
+    private File f;
     private RandomAccessFile oS;
     // private InputStream inStream;
     int count;
@@ -51,6 +54,8 @@ class DownloadThread extends ClientThread {
     private int id;
     private long t;
     private long c;
+    private long size;
+    private boolean closeReq;
 
     @Override
     public void sendMsg(String str) {
@@ -141,10 +146,10 @@ class DownloadThread extends ClientThread {
         }
 
 
-        File = new File(fileName);
+        f = new File(fileName);
 
         try {
-            oS = new RandomAccessFile(File, "rw");
+            oS = new RandomAccessFile(f, "rw");
         } catch (FileNotFoundException ex) {
             Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -194,15 +199,36 @@ class DownloadThread extends ClientThread {
                 }
 
                 publish(new ThreadInfo(-1, -1));
-                client.gui.model.setValueAt("SEEDED", this.id, 6);
+                client.gui.model.setValueAt("CHECKING", this.id, 6);
                 client.gui.model.setValueAt(null, this.id, 2);
                 client.gui.model.setValueAt(100, this.id, 3);
                 client.gui.model.setValueAt(null, this.id, 4);
-                client.dataManager.updateStatus(fileID, "SEEDED");
                 client.dataManager.updateCurrentSize(fileID, fileSize);
-
+                //client.gui.model.setValueAt("SEEDED", this.id, 6);
+                String path = "./" + fileName;
+                String hashcheck = null;
+                try {
+                    hashcheck = getMD5Hash(path);
+                } catch (NoSuchAlgorithmException ex) {
+                    Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                //client.gui.fileTable.repaint();
                 System.out.println("Finish download file");
-
+                if (hashcheck.equals(client.dataManager.getfileHash(fileID))){
+                    client.gui.shareFile(this.id);
+                }else{
+                    System.out.println("File is not correct");
+                    JOptionPane.showMessageDialog(null, "File is not correct", "Error", 0);
+                    client.dataManager.updateStatus(fileID, "PAUSED");
+                    client.dataManager.updateCurrentSize(fileID, 0);
+                    client.gui.model.setValueAt("PAUSED", this.id, 6);
+                    client.gui.model.setValueAt("[unknown]", this.id, 4);
+                    //client.gui.model.setValueAt("SEEDED", this.id, 6);
+                //    File.
+                    //f.deleteOnExit();
+                    //client.dataManager.removeFile(fileID);
+                   // client.gui.deleteFile(this.id);
+                }
             } else {
 
                 this.closeThread();
@@ -292,11 +318,15 @@ class DownloadThread extends ClientThread {
                     client.gui.model.setValueAt(null, i, 2);
                 } else {
                     client.gui.model.setValueAt(c.get(c.size() - 1).getP(), i, 3);
-                    client.gui.model.setValueAt(c.get(c.size() - 1).getRate(), i, 2);
+                client.gui.model.setValueAt(display(c.get(c.size() - 1).getRate()), i, 2);
                 }
             }
             i++;
         }
+    }
+    private  String display(long rate){
+        if (rate < 1024) return rate + "kB/s";
+        else return (float)(rate*100/1024)/100.0 + "MB/s";
     }
 
     @Override
@@ -318,6 +348,57 @@ class DownloadThread extends ClientThread {
                 }
             }
         }
+    }
+
+     private String getMD5Hash(String file) throws NoSuchAlgorithmException {
+        {
+            client.gui.model.setValueAt("CHECKING", this.id, 6);
+            FileInputStream fis = null;
+            try {
+                File f = new File(file);
+                this.size = f.length();
+                System.out.println("File size: " + this.size);
+                //f.
+                MessageDigest md = MessageDigest.getInstance("MD5");
+                fis = new FileInputStream(file);
+                // this.size = fis.getChannel().size();
+                byte[] dataBytes = new byte[1024];
+                int nread = 0;
+                long total = 0;
+                while ((nread = fis.read(dataBytes)) != -1) {
+                    total += nread;
+                    this.recvMsg();
+                    if (this.closeReq)
+                            return null;
+
+                    publish(new ThreadInfo(Long.valueOf(total * 100 / this.size).intValue(), 0));
+
+                    md.update(dataBytes, 0, nread);
+                }
+
+                byte[] mdbytes = md.digest();
+                StringBuilder sb = new StringBuilder("");
+                for (int i = 0; i < mdbytes.length; i++) {
+                    sb.append(Integer.toString((mdbytes[i] & 0xff) + 0x100, 16).substring(1));
+                }
+
+                return sb.toString();
+            } catch (IOException ex) {
+                Logger.getLogger(SeedThread.class.getName()).log(Level.SEVERE, null, ex);
+
+            } catch (NoSuchAlgorithmException ex) {
+                Logger.getLogger(SeedThread.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+                try {
+                    fis.close();
+                } catch (IOException ex) {
+                    Logger.getLogger(SeedThread.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+
+            return null;
+        }
+
     }
 
     public void caluRate() {

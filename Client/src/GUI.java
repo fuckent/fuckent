@@ -42,8 +42,7 @@ import javax.swing.table.TableRowSorter;
  */
 public class GUI extends javax.swing.JFrame {
 
-    private static final Color evenColor = new Color(245, 245, 245);
-    private static final Color selectedColor = new Color(56, 114, 190);
+    private static final Color evenColor = new Color(230, 230, 230);
     Client client;
     public final GUI gui;
     public final FileTableModel model = new FileTableModel();
@@ -86,18 +85,18 @@ public class GUI extends javax.swing.JFrame {
         return 0;
     }
 
-    private void shareFile() {
+    public void shareFile(final int row) {
 
         new Thread(new Runnable() {
 
             public void run() {
 
-                int row = fileTable.getSelectedRow();
-                if (row < 0) {
-                    return;
-                }
+                    //int row = fileTable.getSelectedRow();
+                //if (row < 0) {
+               //     return;
+               // }
                 //DefaultTableModel model = (DefaultTableModel) fileTable.getModel();
-                row = fileTable.convertRowIndexToModel(row);
+                //row = fileTable.convertRowIndexToModel(row);
                 int ID = (Integer) model.getValueAt(row, 0);//);
                 String Hash = (String) model.getValueAt(row, 5);
                 System.out.println("User wants to share file: " + ID);
@@ -105,9 +104,9 @@ public class GUI extends javax.swing.JFrame {
                 if (share) {
                     client.dataManager.updateStatus(ID, "SHARING");
                     model.setValueAt("SHARING", row, 6);
-                    JOptionPane.showMessageDialog(null, "Share file successful", null, 1);
+                    //JOptionPane.showMessageDialog(null, "Share file successful", null, 1);
                 } else {
-                    JOptionPane.showMessageDialog(null, "Can't share this file", "Error", 0);
+                    //JOptionPane.showMessageDialog(null, "Can't share this file", "Error", 0);
                 }
             }
         }).start();
@@ -135,10 +134,10 @@ public class GUI extends javax.swing.JFrame {
                 if (check) {
                     client.dataManager.updateStatus(ID, "SEEDED");
                     model.setValueAt("SEEDED", row, 6);
-                    JOptionPane.showMessageDialog(null, "Unshare successful!", null, 1);
+                    //JOptionPane.showMessageDialog(null, "Unshare successful!", null, 1);
                 } else {
                     System.out.println("ERROR TO UNSHARE");
-                    JOptionPane.showMessageDialog(null, "Can't unshare this file", "Error", 0);
+                    //JOptionPane.showMessageDialog(null, "Can't unshare this file", "Error", 0);
                 }
             }
         }).start();
@@ -427,7 +426,7 @@ public class GUI extends javax.swing.JFrame {
 
     private void about() {
         System.out.println("User wants to see about dialog :-)");
-        
+        JOptionPane.showMessageDialog(null, "BÀI TẬP MẠNG MÁY TÍNH 1\nCHƯƠNG TRÌNH CHIA SẺ TẬP TIN TRỰC TUYẾN\n\nThực hiện: Nhóm 7","ABOUT",1);
     }
 
     private class ClockListener implements ActionListener {
@@ -526,6 +525,7 @@ public class GUI extends javax.swing.JFrame {
         function.setRequestFocusEnabled(false);
 
         seedMenu.setText("Seed file");
+        seedMenu.setPreferredSize(new java.awt.Dimension(200, 22));
         seedMenu.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 seedMenuActionPerformed(evt);
@@ -649,6 +649,13 @@ public class GUI extends javax.swing.JFrame {
         TableColumn column =  fileTable.getColumnModel().getColumn(3);
         column.setCellRenderer(new ProgressRenderer());
         fileTable.setShowGrid(false);
+        fileTable.getColumnModel().getColumn(0).setPreferredWidth(20);
+        fileTable.getColumnModel().getColumn(1).setPreferredWidth(200);
+        fileTable.getColumnModel().getColumn(2).setPreferredWidth(50);
+        fileTable.getColumnModel().getColumn(3).setPreferredWidth(100);
+        fileTable.getColumnModel().getColumn(4).setPreferredWidth(100);
+        fileTable.getColumnModel().getColumn(5).setPreferredWidth(20);
+        fileTable.getColumnModel().getColumn(6).setPreferredWidth(50);
 
         jMenu1.setText("File");
 
@@ -773,7 +780,11 @@ private void fileTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
 
     private void shareMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_shareMenuActionPerformed
         // TODO add your handling code here:
-        this.shareFile();
+        int row = fileTable.getSelectedRow();
+        if(row <0) return;
+        DefaultTableModel model = (DefaultTableModel) fileTable.getModel();
+        row = fileTable.convertRowIndexToModel(row);
+        this.shareFile(row);
     }//GEN-LAST:event_shareMenuActionPerformed
 
     private void unShareMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unShareMenuActionPerformed

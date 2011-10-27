@@ -162,6 +162,7 @@ class SeedThread extends ClientThread {
         client.gui.model.setValueAt("SEEDED", id, 6);
         client.gui.model.setValueAt(fileID, id, 0);
         client.gui.model.setValueAt(fileHash, id, 5);
+        client.gui.shareFile(id);
         //client.gui.model.removeRow(key);
 
        // client.threadManager.removeThread(this.id);

@@ -286,7 +286,6 @@ class UploadThread extends ClientThread {
 
     @Override
     public void closeThread() {
-        //this
         client.dataManager.updateCurrentSize(fileID, totalCount);
         client.dataManager.updateStatus(fileID, "SHARING");
         client.gui.model.setValueAt("SHARING", id, 6);
@@ -325,10 +324,14 @@ class UploadThread extends ClientThread {
     protected void process(java.util.List<ThreadInfo> c) {
 
         client.gui.model.setValueAt(c.get(c.size() - 1).getP(), this.id, 3);
-        client.gui.model.setValueAt(c.get(c.size() - 1).getRate(), this.id, 2);
+
+        client.gui.model.setValueAt(display(c.get(c.size() - 1).getRate()), this.id, 2);
 
     }
-
+    private  String display(long rate){
+        if (rate < 1024) return rate + "kB/s";
+        else return (float)(rate*100/1024)/100.0 + "MB/s";
+    }
     private class CaluRate implements Runnable {
 
         @Override
