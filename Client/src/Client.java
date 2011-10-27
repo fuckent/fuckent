@@ -1,10 +1,7 @@
 
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 
 /*
  * To change this template, choose Tools | Templates
@@ -18,18 +15,25 @@ import javax.swing.UnsupportedLookAndFeelException;
 public class Client {
 
     public static void main(String[] argv) {
-        try {
-            UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
-        } catch (ClassNotFoundException ex) {
-            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (UnsupportedLookAndFeelException ex) {
-            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-        }
-   
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        // com.sun.java.swing.plaf.windows.WindowsLookAndFeel
+        //javax.swing.plaf.metal.MetalLookAndFeel
+        //MetalLookAndFeel a = 
+       //MetalLookAndFeel.setCurrentTheme(new javax.swing.plaf.metal.OceanTheme());
+        
+     try {
+              UIManager.setLookAndFeel(
+                  new javax.swing.plaf.metal.MetalLookAndFeel()
+              );
+         // set UI manager properties here that affect Quaqua
+         
+         } catch (Exception e) {
+             // take an appropriate action here
+             
+         }        //</editor-fold>        
         System.out.println("Client Started!");
         
         Client client = new Client("127.0.0.1", 1236);
