@@ -1,4 +1,3 @@
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -12,104 +11,112 @@ import java.util.logging.Logger;
 //
 public class ServerDataManager {
 
-    private Statement statement;
-    private Connection connection;
+	private Statement statement;
+	private Connection connection;
 
-    public synchronized int addFile(String FileName, long FileSize, String Hash) {
-        try {
-            // TODO: SQL Statement add this file to database
-            // Similar ClientManager ...
-            String str = String.format("insert into FileManager values (null, '%s', %d, '%s')", FileName, FileSize, Hash);
-            statement.executeUpdate(str);
-            str = String.format("select fileID from FileManager where fileName = '%s' and fileHash = '%s'", FileName, Hash);
-            ResultSet rs = statement.executeQuery(str);
+	public synchronized int addFile(String FileName, long FileSize, String Hash) {
+		try {
+			// TODO: SQL Statement add this file to database
+			// Similar ClientManager ...
+			String str = String.format(
+					"insert into FileManager values (null, '%s', %d, '%s')",
+					FileName, FileSize, Hash);
+			statement.executeUpdate(str);
+			str = String
+					.format("select fileID from FileManager where fileName = '%s' and fileHash = '%s'",
+							FileName, Hash);
+			ResultSet rs = statement.executeQuery(str);
 
-            while (rs.next()) {
-                return rs.getInt("fileID");
-            }
+			while (rs.next()) {
+				return rs.getInt("fileID");
+			}
 
-        } catch (SQLException ex) {
-            Logger.getLogger(ServerDataManager.class.getName()).log(Level.SEVERE, null, ex);
-        }
+		} catch (SQLException ex) {
+			Logger.getLogger(ServerDataManager.class.getName()).log(
+					Level.SEVERE, null, ex);
+		}
 
-        return 0;
-    }
+		return 0;
+	}
 
+	public synchronized ResultSet getInfoOfFile(int fileID) {
+		try {
+			return statement.executeQuery(String.format(
+					"select * from FileManager where fileID = %d", fileID));
+		} catch (SQLException ex) {
+			Logger.getLogger(ServerDataManager.class.getName()).log(
+					Level.SEVERE, null, ex);
+		}
 
-    public synchronized ResultSet getInfoOfFile(int fileID) {
-        try {
-            return statement.executeQuery(String.format("select * from FileManager where fileID = %d", fileID));
-        } catch (SQLException ex) {
-            Logger.getLogger(ServerDataManager.class.getName()).log(Level.SEVERE, null, ex);
-        }
+		return null;
+	}
 
-        return null;
-    }    
-    
+	public synchronized Boolean haveFile(int FileID, String Hash) {
+		String sql;
+		try {
+			// TODO: CODE HERE!!!
+			// check if database have a file by FileID
+			if (Hash == null) {
+				sql = String.format(
+						"select * from FileManager where fileID = %d", FileID);
+			} else {
+				sql = String
+						.format("select * from FileManager where fileID = %d and fileHash = '%s'",
+								FileID, Hash);
+			}
+			ResultSet rs = statement.executeQuery(sql);
+			return rs.next();
+		} catch (SQLException ex) {
+			Logger.getLogger(ServerDataManager.class.getName()).log(
+					Level.SEVERE, null, ex);
+		}
+		return false;
+	}
 
-    public synchronized Boolean haveFile(int FileID, String Hash) {
-        String sql;
-        try {
-            // TODO: CODE HERE!!!
-            // check if database have a file by FileID
-            if (Hash == null) {
-                sql = String.format("select * from FileManager where fileID = %d", FileID);
-            } else {
-                sql = String.format("select * from FileManager where fileID = %d and fileHash = '%s'", FileID, Hash);
-            }
-            ResultSet rs = statement.executeQuery(sql);
-            return rs.next();
-        } catch (SQLException ex) {
-            Logger.getLogger(ServerDataManager.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return false;
-    }
+	public ServerDataManager() {
+		try {
+			Class.forName("org.sqlite.JDBC");
+		} catch (Exception e) {
+			System.out.println("Can't found sqlite library");
+			System.exit(0);
+		}
 
-    public ServerDataManager() {
-        try {
-            Class.forName("org.sqlite.JDBC");
-        } catch (Exception e) {
-            System.out.println("Can't found sqlite library");
-            System.exit(0);
-        }
+		connection = null;
+		try {
+			// create a database connection
+			connection = DriverManager.getConnection("jdbc:sqlite:server.db");
+			statement = connection.createStatement();
+			statement.setQueryTimeout(30); // set timeout to 30 sec.
 
-        connection = null;
-        try {
-            // create a database connection
-            connection = DriverManager.getConnection("jdbc:sqlite:server.db");
-            statement = connection.createStatement();
-            statement.setQueryTimeout(30);  // set timeout to 30 sec.
+			/* Create a new database structure */
+			statement
+					.executeUpdate("create table if not exists FileManager (fileID INTEGER PRIMARY KEY, fileName VARCHAR, fileSize INTEGER, fileHash VARCHAR)");
+			// statement.executeUpdate("insert into FileManager values(NULL, 531, '123')");
+			// statement.e
+			// connection.close();
+			// statement.executeUpdate("insert into person values(2, 'yui')");
 
-            /* Create a new database structure */
-            statement.executeUpdate("create table if not exists FileManager (fileID INTEGER PRIMARY KEY, fileName VARCHAR, fileSize INTEGER, fileHash VARCHAR)");
-            // statement.executeUpdate("insert into FileManager values(NULL, 531, '123')");
-            //			statement.e
-            //			connection.close();
-            //			statement.executeUpdate("insert into person values(2, 'yui')");
+		} catch (SQLException e) {
+			// if the error message is "out of memory",
+			// it probably means no database file is found
+			// TODO: CODE HERE!!
 
-        } catch (SQLException e) {
-            // if the error message is "out of memory", 
-            // it probably means no database file is found
-            // TODO: CODE HERE!!
+			System.err.println(e.getMessage());
+		}
 
-            System.err.println(e.getMessage());
-        }
+	}
 
+	protected void finalize() throws Throwable {
+		try {
+			if (connection != null) {
+				connection.close();
+			}
+		} catch (SQLException e) {
+			// connection close failed.
+			System.err.println(e);
+		}
 
-
-    }
-
-    protected void finalize() throws Throwable {
-        try {
-            if (connection != null) {
-                connection.close();
-            }
-        } catch (SQLException e) {
-            // connection close failed.
-            System.err.println(e);
-        }
-
-        //do finalization here
-        super.finalize(); //not necessary if extending Object.
-    }
+		// do finalization here
+		super.finalize(); // not necessary if extending Object.
+	}
 }

@@ -1,4 +1,3 @@
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -8,51 +7,51 @@ import java.net.Socket;
  * and open the template in the editor.
  */
 /**
- *
+ * 
  * @author thong
  */
 public class Listener implements Runnable {
 
-    private ServerSocket listener;
+	private ServerSocket listener;
 
-    private Client client;
+	private Client client;
 
-    Listener(int port, Client client) {
-        this.client = client;
-        // client.dataManager.
+	Listener(int port, Client client) {
+		Boolean Ok = false;
+		this.client = client;
+		// client.dataManager.
+		do {
+			try {
+				listener = new ServerSocket(client.port);
+				listener.setReuseAddress(true);
+				Ok = true;
+			} catch (IOException e) {
+				System.err.println("Can't listen at port: " + client.port
+						+ "\n[Download Only] Try with port: " + ++client.port);
+				client.title = "[Download only] Client";
 
-        try {
-            listener = new ServerSocket(port);
-        } catch (IOException e) {
-            // TODO Print error message!
-            e.printStackTrace();
-        }
-    }
+			}
+		} while (!Ok);
+	}
 
-    @Override
-    public void run() {
-        System.out.println("Client Listening...");
-        try {
-        listener.setReuseAddress(true);
-        } catch (IOException e) { }
-        
-        Socket conn;
-        UploadThread t;
-        while (true) {
-            try {
-                conn = listener.accept();
-                //conn.setReuseAddress(true);
-                t = new UploadThread(conn, this.client);
-                t.execute();
-                // client.threadManager.addThread(FileID, null);
-               
+	@Override
+	public void run() {
+		System.out.println("Client Listening...");
 
-            } catch (IOException e) {
-                // TODO Print error and exit ! (or continue?)
-                e.printStackTrace();
-            }
+		Socket conn;
+		UploadThread t;
+		while (true) {
+			try {
+				conn = listener.accept();
+				t = new UploadThread(conn, this.client);
+				t.execute();
 
-        }
+			} catch (IOException e) {
+				// TODO Print error and exit ! (or continue?)
+				e.printStackTrace();
+			}
 
-    }
+		}
+
+	}
 }

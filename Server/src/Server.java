@@ -35,7 +35,7 @@ public class Server implements Runnable {
 		// TODO Create a new object from class Server: param listenPort
 		Thread t = new Thread(new Server(5321));
 		t.run();
-		//server.run();
+		// server.run();
 	}
 
 	public void run() {
@@ -50,7 +50,8 @@ public class Server implements Runnable {
 				Socket conn = listener.accept();
 
 				/* create a new thread ServerPI to deal with this connection */
-				Thread t = new Thread(new ServerPI(conn, clientManager, serverDataManager));
+				Thread t = new Thread(new ServerPI(conn, clientManager,
+						serverDataManager));
 				t.start();
 
 				// TODO Print LOG message HERE!

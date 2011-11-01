@@ -200,20 +200,12 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="1" attributes="0">
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane1" pref="750" max="32767" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
-          </Group>
+          <Component id="jScrollPane1" alignment="0" pref="775" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="1" attributes="0">
-              <EmptySpace min="-2" pref="50" max="-2" attributes="0"/>
-              <Component id="jScrollPane1" pref="213" max="32767" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
-          </Group>
+          <Component id="jScrollPane1" alignment="0" pref="222" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
@@ -296,6 +288,7 @@
             <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="fileTableMouseClicked"/>
             <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="fileTableMousePressed"/>
             <EventHandler event="mouseReleased" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="fileTableMouseReleased"/>
+            <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="fileTableKeyPressed"/>
           </Events>
           <AuxValues>
             <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new javax.swing.JTable(model) {&#xa;    @Override public Component prepareRenderer(TableCellRenderer tcr, int row, int column) {&#xa;        Component c = super.prepareRenderer(tcr, row, column);&#xa;        if(isRowSelected(row)) {&#xa;            //c.setForeground(getSelectionForeground());&#xa;            //c.setBackground(selectedColor);&#xa;            // c.setForeground(new Color(255,255,255));&#xa;        }else{&#xa;            //c.setForeground(getForeground());&#xa;            c.setBackground((row%2==1)?evenColor:getBackground());&#xa;        }&#xa;        return c;&#xa;    }&#xa;}&#xa;"/>

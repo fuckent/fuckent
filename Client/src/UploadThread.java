@@ -26,24 +26,19 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 class UploadThread extends ClientThread {
 
     private Socket conn;
-    //private int speed;
+    // private int speed;
     private Client client;
     private InputStreamReader in;
     private BufferedReader reader;
     private PrintWriter out;
     private long rate;
-    //private boolean exitRequest;
+    // private boolean exitRequest;
     private ConcurrentLinkedQueue<String> msgQueue;
     private int fileID;
     private long totalCount;
     private int id;
     private long time;
     private long dtime;
-    private int limitrate;
-    // private int uplimitrate;
-    //private int downlimitrate;
-    private int returnrate;
-    private int countByte;
     private int dRate;
     private int uRate;
     private int count;
@@ -51,6 +46,7 @@ class UploadThread extends ClientThread {
     private long c;
     private String fileName;
     private String hash;
+    private String fileSize;
 
     @Override
     public void recvMsg() {
@@ -62,13 +58,14 @@ class UploadThread extends ClientThread {
             try {
                 this.conn.close();
             } catch (IOException ex) {
-                Logger.getLogger(UploadThread.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(UploadThread.class.getName()).log(
+                        Level.SEVERE, null, ex);
             }
             System.out.println("Closing thread");
-            //client.dataManager.updateCurrentSize(fileID, totalCount);
+            // client.dataManager.updateCurrentSize(fileID, totalCount);
             closeThread();
-            //client.dataManager.updateStatus(fileID, "PAUSED");
-            //client.threadManager.removeThread(fileID);
+            // client.dataManager.updateStatus(fileID, "PAUSED");
+            // client.threadManager.removeThread(fileID);
             Thread.currentThread().stop();
         } else if (msg.matches("DOWNLOADRATE [-+]?[0-9]+")) {
             String[] lst = msg.split(" ");
@@ -91,9 +88,6 @@ class UploadThread extends ClientThread {
         this.client = client;
         msgQueue = new ConcurrentLinkedQueue<String>();
         dtime = 0;
-        limitrate = -1;
-        returnrate = 0;
-        countByte = 0;
         uRate = -1;
         dRate = -1;
     }
@@ -101,15 +95,14 @@ class UploadThread extends ClientThread {
     /**
      * Recv input from client (DOWNLOAD - RATE) and respond
      * 
-     * We need manage upload rate in this class 
-     *      Hint: Count Bytes had been upload and then Sleep in short-time to
-     *          reach limit rate
+     * We need manage upload rate in this class Hint: Count Bytes had been
+     * upload and then Sleep in short-time to reach limit rate
      * 
      */
-    //@Override
+    // @Override
     public void Run() {
         RandomAccessFile iS = null;
-        //int count;
+        // int count;
         totalCount = 0;
         Object vt;
         Vector vtt;
@@ -119,10 +112,11 @@ class UploadThread extends ClientThread {
             // read input from client and respond
             // Use System.currentTimeMilis to get current time
             // conn.setSendBufferSize(4096);
-            //conn.setReuseAddress(true);
+            // conn.setReuseAddress(true);
             this.in = new InputStreamReader(conn.getInputStream());
             this.reader = new BufferedReader(in);
             this.out = new PrintWriter(conn.getOutputStream());
+            conn.setSoTimeout(5000);
 
             String line = reader.readLine();
             System.out.println("REQ: " + line);
@@ -142,7 +136,7 @@ class UploadThread extends ClientThread {
                     out.format("OK %d\n", fileSize).flush();
                     File f = new File(location);
                     iS = new RandomAccessFile(location, "r");
-                    //System.out.println("totalCount: " + totalCount);
+                    // System.out.println("totalCount: " + totalCount);
                     iS.seek(totalCount);
 
                     byte[] buf = new byte[4096];
@@ -153,31 +147,27 @@ class UploadThread extends ClientThread {
                         }
                         i++;
                     }
-                    
+
                     vtt = (Vector) client.gui.model.getDataVector().elementAt(i);
-                   // this.fileID = vtt.elementAt(i)
-                    //this.client.gui.model.addFile(new Files(fileID, this.fileName, 0 + " kB", 0, clientAddr, fileHash, "DOWNLOADING"), this);
-                    
-                    //vt = client.gui.model.getDataVector().get(i);
-                    this.fileID = ((Integer)vtt.elementAt(0)).intValue();
-                    this.fileName = (String)vtt.elementAt(1);
-                    this.hash = (String)vtt.elementAt(5);
-                    client.gui.model.addFile(new Files(
-                    this.fileID, 
-                            this.fileName
-                    , 
-                    null,
-                    0,
-                    null,
-                    this.hash, 
-                    null), 
-                            this);
-                    
-                    this.id = client.gui.model.getRowCount()-1;
+                    // this.fileID = vtt.elementAt(i)
+                    // this.client.gui.model.addFile(new Files(fileID,
+                    // this.fileName, 0 + " kB", 0, clientAddr, fileHash,
+                    // "DOWNLOADING"), this);
+
+                    // vt = client.gui.model.getDataVector().get(i);
+                    this.fileID = ((Integer) vtt.elementAt(0)).intValue();
+                    this.fileName = (String) vtt.elementAt(1);
+                    this.hash = (String) vtt.elementAt(5);
+                    this.fileSize = (String) vtt.elementAt(2);
+                    client.gui.model.addFile(new Files(this.fileID,
+                            this.fileName, this.fileSize, null, 0, null,
+                            this.hash, null), this);
+
+                    this.id = client.gui.model.getRowCount() - 1;
                     client.gui.model.setSwingWorker(this.id, this);
                     // client.threadManager.addThread(i, this);
-                    client.gui.model.setValueAt("UPLOADING", this.id, 6);
-                    client.gui.model.setValueAt(conn.getInetAddress().getHostAddress(), this.id, 4);
+                    client.gui.model.setValueAt("UPLOADING", this.id, 7);
+                    client.gui.model.setValueAt(conn.getInetAddress().getHostAddress(), this.id, 5);
 
                     this.t = System.currentTimeMillis();
                     this.c = this.totalCount;
@@ -199,13 +189,17 @@ class UploadThread extends ClientThread {
                         conn.getOutputStream().write(buf, 0, count);
                         conn.getOutputStream().flush();
                         this.limitRate();
-                        publish(new ThreadInfo(Long.valueOf(totalCount * 100 / fileSize).intValue(), this.getRate()));
+                        publish(new ThreadInfo(Long.valueOf(
+                                totalCount * 100 / fileSize).intValue(),
+                                this.getRate()));
                     }
                     conn.getOutputStream().flush();
+
+
                     this.closeThread();
-                    //client.gui.model.setValueAt("SHARING", id, 6);
-                    //client.gui.model.setValueAt(null, this.id, 4);
-                    //client.dataManager.updateCurrentSize(fileID, fileSize);
+                    // client.gui.model.setValueAt("SHARING", id, 7);
+                    // client.gui.model.setValueAt(null, this.id, 5);
+                    // client.dataManager.updateCurrentSize(fileID, fileSize);
                     System.out.println("Finish upload file");
                     // client.threadManager.removeThread(fileID);
                 }
@@ -230,8 +224,8 @@ class UploadThread extends ClientThread {
         }
     }
     /**
-     *  Notice: Client in other side limit DOWNLOAD rate by sent RATE XXX, whereas
-     *          this function is called by GUI to limit UPLOAD rate.
+     * Notice: Client in other side limit DOWNLOAD rate by sent RATE XXX,
+     * whereas this function is called by GUI to limit UPLOAD rate.
      */
     long tC = 0;
 
@@ -242,8 +236,7 @@ class UploadThread extends ClientThread {
         long deltaC = c1 - this.c;
 
         if (deltaT > 0) {
-            // System.out.println(deltaT + " -- " + deltaC);
-            this.rate = deltaC * 1000 / deltaT / 1024;
+            this.rate = (this.rate*90 + 10*(deltaC * 1000 / deltaT / 1024))/100;
         }
 
         this.t = t1;
@@ -256,11 +249,12 @@ class UploadThread extends ClientThread {
         try {
             Thread.sleep(time / 1000000);
         } catch (InterruptedException ex) {
-            Logger.getLogger(UploadThread.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(UploadThread.class.getName()).log(Level.SEVERE,
+                    null, ex);
         }
         while (t1 > System.nanoTime()) {
             // do nothing
-            //System.out.print
+            // System.out.print
         }
     }
 
@@ -277,19 +271,20 @@ class UploadThread extends ClientThread {
         if (tempRate > 0) {
             long truetime = (long) (count * 1000.0 / (1024 * tempRate) * 1000000);
             if (truetime > dtime) {
-                this.sleepNano(2 * (truetime - dtime));
+                this.sleepNano((truetime - dtime));
             }
         }
 
-        time = t1;
+        time = System.nanoTime();
+        ;
     }
 
     @Override
     public void closeThread() {
         client.dataManager.updateCurrentSize(fileID, totalCount);
         client.dataManager.updateStatus(fileID, "SHARING");
-        client.gui.model.setValueAt("SHARING", id, 6);
-        client.gui.model.setValueAt(null, this.id, 4);
+        client.gui.model.setValueAt("SHARING", id, 7);
+        client.gui.model.setValueAt(null, this.id, 5);
         this.client.gui.delFile_(this.id);
         // client.threadManager.removeThread(this.id);
     }
@@ -297,7 +292,8 @@ class UploadThread extends ClientThread {
     @Override
     public synchronized long getRate() {
         /**
-         * GUI call this function to get upload speed and then show on fileTable (GUI)
+         * GUI call this function to get upload speed and then show on fileTable
+         * (GUI)
          */
         return rate;
         // throw new UnsupportedOperationException("Not supported yet.");
@@ -317,21 +313,27 @@ class UploadThread extends ClientThread {
     protected Integer doInBackground() throws Exception {
         this.Run();
         return 0;
-        //throw new UnsupportedOperationException("Not supported yet.");
+        // throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
     protected void process(java.util.List<ThreadInfo> c) {
 
-        client.gui.model.setValueAt(c.get(c.size() - 1).getP(), this.id, 3);
+        client.gui.model.setValueAt(c.get(c.size() - 1).getP(), this.id, 4);
 
-        client.gui.model.setValueAt(display(c.get(c.size() - 1).getRate()), this.id, 2);
+        client.gui.model.setValueAt(display(c.get(c.size() - 1).getRate()),
+                this.id, 3);
 
     }
-    private  String display(long rate){
-        if (rate < 1024) return rate + "kB/s";
-        else return (float)(rate*100/1024)/100.0 + "MB/s";
+
+    private String display(long rate) {
+        if (rate < 1024) {
+            return rate + " kB/s";
+        } else {
+            return (float) (rate * 100 / 1024) / 100.0 + " MB/s";
+        }
     }
+
     private class CaluRate implements Runnable {
 
         @Override
@@ -341,7 +343,8 @@ class UploadThread extends ClientThread {
                     caluRate();
                     Thread.sleep(600);
                 } catch (InterruptedException ex) {
-                    Logger.getLogger(UploadThread.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(UploadThread.class.getName()).log(
+                            Level.SEVERE, null, ex);
                 }
             }
         }
